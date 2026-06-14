@@ -1,0 +1,50 @@
+{
+  "sanitization": {
+    "maskValue": "[REDACTED_BY_TRACERCA]",
+    "sensitiveHeaders": [
+      "authorization",
+      "cookie",
+      "set-cookie",
+      "x-api-key",
+      "x-session-token",
+      "proxy-authorization",
+      "apikey",
+      "api-key"
+    ],
+    "sensitiveKeys": [
+      "password",
+      "pwd",
+      "token",
+      "secret",
+      "cvv",
+      "creditcard",
+      "ssn",
+      "email",
+      "username",
+      "passphrase",
+      "key",
+      "apikey",
+      "api_key"
+    ],
+    "customRegexPatterns": [
+      {
+        "name": "Email Address",
+        "pattern": "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b",
+        "replacement": "[EMAIL_REDACTED]"
+      },
+      {
+        "name": "Bearer JWT Token",
+        "pattern": "bearer\\s+[A-Za-z0-9-_=]+\\.[A-Za-z0-9-_=]+\\.?[A-Za-z0-9-_.+/=]*",
+        "replacement": "Bearer [JWT_REDACTED]"
+      },
+      {
+        "name": "Credit Card",
+        "pattern": "\\b(?:\\d[ -]*?){13,16}\\b",
+        "replacement": "[CREDIT_CARD_REDACTED]"
+      }
+    ]
+  },
+  "analysis": {
+    "maxAnalyses": 5
+  }
+}

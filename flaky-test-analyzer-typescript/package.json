@@ -24,14 +24,18 @@
   "author": "mdiwakar06",
   "license": "MIT",
   "dependencies": {
-    "commander": "^12.0.0",
+    "@google/generative-ai": "^0.24.1",
+    "adm-zip": "^0.5.17",
     "chalk": "^4.1.2",
+    "commander": "^12.0.0",
+    "dotenv": "^17.4.2",
     "fast-xml-parser": "^4.3.0",
     "glob": "^10.3.0"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
     "@types/node": "^20.11.0",
-    "typescript": "^5.3.0",
-    "ts-node": "^10.9.0"
+    "ts-node": "^10.9.0",
+    "typescript": "^5.3.0"
   }
 }

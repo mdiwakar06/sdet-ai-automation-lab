@@ -14,7 +14,7 @@ setup(
     description="A practical SDET utility for generating realistic test data",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/mdiwakar06/sdet-automation-lab/tree/main/testdata-generator-python",
+    url="https://github.com/mdiwakar06/sdet-ai-automation-lab/tree/main/testdata-generator-python",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",
