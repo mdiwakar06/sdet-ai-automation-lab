@@ -187,6 +187,9 @@ export class BrowserAutomator {
       } else {
         // If text length is 0, we are still waiting for content to start streaming
         stableTicks = 0;
+        if (Date.now() - pollStartTime > 15000) {
+          throw new Error('Timeout waiting for chatbot response to start streaming (no content received within 15 seconds).');
+        }
       }
 
       await this.page!.waitForTimeout(pollInterval);

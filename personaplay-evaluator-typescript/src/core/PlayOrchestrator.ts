@@ -51,8 +51,7 @@ export class PlayOrchestrator {
     const maxTurns = this.persona.maxTurns || 8;
     let status: RunStatus = 'SUCCESS';
     let errorMsg: string | undefined;
-    let consecutiveStalls = 0;
-    let previousAssistantResponse = '';
+    const matchHistory: boolean[] = [];
 
     try {
       // 1. Initialize browser
@@ -84,24 +83,37 @@ export class PlayOrchestrator {
         logger.info(`Turn ${turn} complete. Received assistant reply (${assistantResponseContent.length} chars).`);
 
         // C. Jaccard Similarity Repetition Loop Check
-        if (previousAssistantResponse) {
-          const similarity = this.calculateJaccardSimilarity(previousAssistantResponse, assistantResponseContent);
-          logger.info(`Jaccard similarity with previous assistant reply: ${(similarity * 100).toFixed(1)}%`);
-          
-          if (similarity >= 0.90) {
-            consecutiveStalls++;
-          } else {
-            consecutiveStalls = 0;
+        const assistantResponses = transcript
+          .filter((msg) => msg.role === 'assistant')
+          .map((msg) => msg.content);
+
+        if (assistantResponses.length > 0) {
+          const currentResponse = assistantResponses[assistantResponses.length - 1];
+          const previousResponses = assistantResponses.slice(-4, -1); // Up to 3 previous responses
+
+          let hasMatch = false;
+          for (const prev of previousResponses) {
+            const similarity = this.calculateJaccardSimilarity(prev, currentResponse);
+            logger.info(`Jaccard similarity with a previous assistant reply: ${(similarity * 100).toFixed(1)}%`);
+            if (similarity >= 0.90) {
+              hasMatch = true;
+              break;
+            }
           }
 
-          if (consecutiveStalls >= 2) {
-            logger.warn(`CONVERSATIONAL_STALL detected: 3 consecutive responses have >90% similarity.`);
+          matchHistory.push(hasMatch);
+
+          // Check if any match exceeds 90% twice in a short span (last 3 turns)
+          const span = 3;
+          const recentMatches = matchHistory.slice(-span);
+          const matchCount = recentMatches.filter(m => m).length;
+
+          if (matchCount >= 2) {
+            logger.warn(`CONVERSATIONAL_STALL detected: ${matchCount} matches of >90% similarity in the last ${span} turns.`);
             status = 'CONVERSATIONAL_STALL';
             break;
           }
         }
-        
-        previousAssistantResponse = assistantResponseContent;
       }
     } catch (error: any) {
       status = 'ERROR';
