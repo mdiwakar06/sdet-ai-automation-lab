@@ -8,6 +8,7 @@ declare module '@playwright/test/reporter' {
     titlePath(): string[];
     outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky';
     location: { file: string; line: number; column: number };
+    retries: number;
   }
   export interface TestResult {
     status: 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
@@ -20,6 +21,7 @@ declare module '@playwright/test/reporter' {
       body?: Buffer;
       contentType: string;
     }>;
+    retry: number;
   }
   export interface FullConfig {
     rootDir: string;

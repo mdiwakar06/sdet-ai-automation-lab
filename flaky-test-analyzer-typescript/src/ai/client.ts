@@ -26,6 +26,10 @@ export function compilePrompt(context: RawDiagnosticContext): string {
       ).join('\n---\n')
     : 'No failed network requests detected.';
 
+  const stackTraceStr = context.stackTrace
+    ? (context.stackTrace.length > 1000 ? context.stackTrace.substring(0, 1000) + '...' : context.stackTrace)
+    : 'No stack trace available.';
+
   return `
 You are TraceRCA, an expert automated QA Failure Investigator and Root-Cause Analyzer.
 Your task is to analyze the provided diagnostic telemetry from a failed E2E test run and classify the failure.
@@ -39,6 +43,7 @@ Your task is to analyze the provided diagnostic telemetry from a failed E2E test
 - Test Name: ${context.testName}
 - Test Suite: ${context.filePath || 'Unknown'}
 - Error Stack: ${context.errorMessage || 'No error message available.'}
+- Stack Trace: ${stackTraceStr}
 - Failed Step: ${context.failedAction ? `Action "${context.failedAction.name}" on selector "${context.failedAction.selector || 'None'}"` : 'None'}
 
 ---

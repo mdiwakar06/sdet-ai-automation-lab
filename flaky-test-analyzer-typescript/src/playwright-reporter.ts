@@ -30,6 +30,10 @@ export class PlaywrightReporter implements Reporter {
       return;
     }
 
+    if (result.retry < test.retries) {
+      return;
+    }
+
     const promise = (async () => {
       try {
         // Find trace zip attachment

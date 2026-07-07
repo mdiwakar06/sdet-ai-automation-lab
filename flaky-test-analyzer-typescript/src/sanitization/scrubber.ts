@@ -155,14 +155,20 @@ export function traverseAndMask(obj: any, config: ScrubberConfig): any {
  */
 export function sanitizeBody(body: string | undefined, config: ScrubberConfig): string | undefined {
   if (!body) return body;
+  let result: string;
   try {
     const parsed = JSON.parse(body);
     const scrubbedObj = traverseAndMask(parsed, config);
-    return JSON.stringify(scrubbedObj);
+    result = JSON.stringify(scrubbedObj);
   } catch (e) {
     // Unstructured text fallback
-    return sanitizeText(body, config);
+    result = sanitizeText(body, config) || '';
   }
+
+  if (result.length > 1000) {
+    return result.substring(0, 1000);
+  }
+  return result;
 }
 
 /**
