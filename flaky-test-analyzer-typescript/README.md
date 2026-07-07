@@ -1,209 +1,138 @@
-# Flaky Test Analyzer
+# 🚀 SDET Automation Lab: Flaky Analyzer & TraceRCA
 
-A CLI tool to analyze test results across multiple runs and identify flaky tests. Helps QA and SDET teams find unreliable tests that erode confidence in test suites.
+A comprehensive developer operations (DevEx) and test engineering toolkit. It features a traditional **Flaky Test Analyzer** (calculating status transitions across runs) and **TraceRCA**—an **AI-Powered Test Failure Root-Cause Analysis CLI & custom Playwright Reporter**.
 
-## What is a Flaky Test?
+---
 
-A flaky test is one that produces inconsistent results - sometimes passing, sometimes failing - without any changes to the code. Flaky tests:
-- Waste developer time investigating false failures
-- Reduce confidence in the test suite
-- Can mask real bugs
-- Slow down CI/CD pipelines with retries
-
-## Features
-
-- **Multi-format support**: JUnit XML, Jest JSON, Playwright JSON
-- **Auto-detection**: Automatically detects report format
-- **Flakiness scoring**: Calculates a flakiness percentage based on status transitions
-- **Visual history**: See pass/fail patterns across runs
-- **Configurable thresholds**: Define what % flakiness is acceptable
-- **CI-friendly**: Exit code 1 when flaky tests detected, JSON output for automation
-
-## Quick Start
-
-```bash
-# Install dependencies
-npm install
-
-# Build
-npm run build
-
-# Analyze test results
-npx flaky analyze "samples/*.xml"
-```
-
-## Installation
-
-```bash
-cd flaky-test-analyzer-typescript
-npm install
-npm run build
-npm link  # Makes 'flaky' command globally available
-```
-
-## CLI Usage
-
-```bash
-# Analyze JUnit XML reports from multiple runs
-flaky analyze "results/run-*.xml"
-
-# Analyze Jest JSON reports
-flaky analyze "jest-results/*.json" -f jest
-
-# Analyze with custom threshold (default: 10%)
-flaky analyze "results/*.xml" -t 20
-
-# Output as JSON
-flaky analyze "results/*.xml" -o json
-
-# Save JSON report to file
-flaky analyze "results/*.xml" -o json --output-file report.json
-
-# Require minimum 3 runs to flag as flaky
-flaky analyze "results/*.xml" -m 3
-
-# Show top 5 flakiest tests
-flaky analyze "results/*.xml" -n 5
-
-# List supported formats
-flaky formats
-```
-
-## Options
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `-f, --format` | Force report format (junit, jest, playwright) | auto-detect |
-| `-t, --threshold` | Flakiness % threshold to flag as flaky | 10 |
-| `-m, --min-runs` | Minimum runs required to calculate flakiness | 2 |
-| `-n, --top` | Number of top flaky tests to show | 10 |
-| `-o, --output` | Output format (console, json) | console |
-| `--output-file` | Write JSON output to file | - |
-
-## Supported Report Formats
-
-| Format | Description | File Type |
-|--------|-------------|-----------|
-| `junit` | JUnit/xUnit XML | .xml |
-| `jest` | Jest JSON reporter | .json |
-| `playwright` | Playwright JSON reporter | .json |
-
-### JUnit XML (pytest, JUnit, TestNG, NUnit)
-```bash
-# pytest
-pytest --junitxml=results.xml
-
-# JUnit/Maven
-mvn test
-
-# TestNG
-# Generates testng-results.xml by default
-```
-
-### Jest
-```bash
-jest --json --outputFile=results.json
-```
-
-### Playwright
-```bash
-npx playwright test --reporter=json
-```
-
-## How Flakiness is Calculated
-
-The flakiness score is based on status transitions between runs:
-
-```
-Flakiness = (status_transitions / (total_runs - 1)) × 100
-```
-
-Examples:
-- `✓ ✓ ✓ ✓` = 0% (always passes)
-- `✗ ✗ ✗ ✗` = 0% (always fails)
-- `✓ ✗ ✓ ✗` = 100% (alternates every run)
-- `✓ ✓ ✗ ✓` = 67% (2 transitions in 3 intervals)
-
-## Example Output
-
-```
-═══════════════════════════════════════════════════════════
-                    FLAKY TEST ANALYSIS
-═══════════════════════════════════════════════════════════
-
-Summary:
-────────────────────────────────────────────────────────────
-  Total Tests:          5
-  Test Runs Analyzed:   4
-  Flaky Tests:          3
-  Stable Passing:       2
-  Stable Failing:       0
-  Avg Flakiness Score:  40%
-
-⚠ Flaky Tests Detected:
-────────────────────────────────────────────────────────────
-
-  should handle network timeout
-  LoginTests
-  Flakiness: 67%  |  Runs: 4  |  Pass: 2  Fail: 2
-  History: ✗ ✓ ✗ ✓
-  Last Error: Connection refused
-
-  should add item to cart
-  CartTests
-  Flakiness: 33%  |  Runs: 4  |  Pass: 3  Fail: 1
-  History: ✓ ✓ ✗ ✓
-  Last Error: Element not found
-
-Legend: ✓ = passed, ✗ = failed, ! = error, ○ = skipped
-```
-
-## CI/CD Integration
-
-The CLI exits with code 1 when flaky tests are detected, making it easy to integrate into CI pipelines:
-
-```yaml
-# GitHub Actions example
-- name: Analyze test flakiness
-  run: |
-    npx flaky analyze "test-results/**/*.xml" -t 15
-  continue-on-error: false
-```
-
-## Programmatic Usage
-
-```typescript
-import { parseFiles } from 'flaky-test-analyzer/parsers';
-import { analyzeTests } from 'flaky-test-analyzer/analyzer';
-
-const results = await parseFiles(['results/*.xml']);
-const analysis = analyzeTests(results, {
-  threshold: 10,
-  minRuns: 2,
-  topN: 10,
-});
-
-console.log(`Found ${analysis.summary.flakyTests} flaky tests`);
-```
-
-## Project Structure
+## 📦 Project Structure
 
 ```
 flaky-test-analyzer-typescript/
 ├── src/
-│   ├── index.ts           # CLI entry point
-│   ├── types.ts           # TypeScript interfaces
-│   ├── analyzer.ts        # Core analysis logic
-│   ├── parsers/
-│   │   ├── index.ts       # Parser registry
-│   │   ├── junit.ts       # JUnit XML parser
-│   │   ├── jest.ts        # Jest JSON parser
-│   │   └── playwright.ts  # Playwright JSON parser
-│   └── reporters/
-│       ├── console.ts     # Terminal output
-│       └── json.ts        # JSON output
-├── samples/               # Sample test reports
-├── package.json
-├── tsconfig.json
-└── README.md
+│   ├── index.ts                      # CLI router (analyze, report, formats, tracerca)
+│   ├── types.ts                      # Unified types for flakiness & TraceRCA
+│   ├── analyzer.ts                   # Traditional flakiness scoring calculations
+│   ├── playwright-reporter.ts        # Playwright custom reporter entry point (NEW)
+│   ├── parsers/                      # JUnit XML, Jest JSON, and Playwright ZIP parsers
+│   ├── sanitization/                 # AST JSON scrubber & regex masking engine (NEW)
+│   ├── ai/                           # Gemini SDK connector & prompt compiler (NEW)
+│   └── reporters/                    # Console cards, JSON output, & Tailwind HTML dashboards
+├── tracerca.config.json              # Config parameters for PII redacting & cost caps (NEW)
+└── README.md                         # This documentation
 ```
+
+---
+
+## 🩹 Module 1: TraceRCA (AI Failure Root-Cause Analyzer)
+
+TraceRCA intercepts Playwright test failures, programmatically inspects trace ZIP archives, scrubs sensitive PII/secrets locally, and utilizes the Gemini API with strict structured outputs to classify bugs.
+
+### 🌟 Core Capabilities
+* **Programmatic Trace Extraction**: Streams logs from `trace.zip` (`trace.playwright-trace` and `trace.network`) in memory. It pulls the last 10 user actions, console warnings/errors, and HTTP response bodies for status codes $\ge 400$ without launching heavy browsers in CI.
+* **AST & Regex PII Sanitization**: Cleans headers (authorization tokens, cookies) and deep JSON body keys (passwords, credit cards, emails, SSNs) locally before transmitting data to the LLM.
+* **Prompt Injection Protection**: Uses Gemini's native **Structured Outputs (`responseSchema`)** to enforce schema responses, preventing hijackers from manipulating the classification output.
+* **CI Cost Controls**: Caps analyses per run (default: 5) to prevent rate limits and cost spikes during environment outages. Only analyzes failures on the final retry step.
+* **Graceful Fallbacks**: Automatically falls back to standard Playwright Reporter API logs (`result.errors` and `stdout/stderr`) if trace files are missing or trace parsing fails.
+
+---
+
+### 🚦 Quick Start (TraceRCA)
+
+#### 1. Setup API Key
+TraceRCA reads the Gemini API Key from your environment:
+```bash
+export GEMINI_API_KEY="your-gemini-api-key-here"
+```
+
+#### 2. Configure PII & Limits
+Adjust rules inside `tracerca.config.json`:
+```json
+{
+  "sanitization": {
+    "maskValue": "[REDACTED_BY_TRACERCA]",
+    "sensitiveHeaders": ["authorization", "cookie"],
+    "sensitiveKeys": ["password", "token", "creditcard", "email", "key"]
+  },
+  "analysis": {
+    "maxAnalyses": 5
+  }
+}
+```
+
+#### 3. Integrate with Playwright
+Register the reporter in `playwright.config.ts`:
+```typescript
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [
+    ['list'],
+    ['./flaky-test-analyzer-typescript/dist/playwright-reporter']
+  ],
+  use: {
+    trace: 'retain-on-failure', // Required to generate trace.zip files
+  }
+});
+```
+
+---
+
+### 🎛️ TraceRCA CLI Subcommands
+
+Once built, the CLI provides two primary diagnostic commands:
+
+#### 1. `flaky tracerca analyze`
+Manually parse trace files and run AI triaging.
+```bash
+# Analyze trace zip files matching a glob pattern
+npx flaky tracerca analyze "test-results/**/*.zip"
+```
+
+#### 2. `flaky tracerca report`
+Generate the interactive slate-themed HTML dashboard from cached runs.
+```bash
+# Finds the latest run and writes 'tracerca-report.html'
+npx flaky tracerca report
+```
+
+---
+
+## 📊 Module 2: Flaky Test Analyzer (Traditional calculation)
+
+Calculates test reliability scores across multiple execution reports to flag unstable test runs.
+
+### 🌟 Core Capabilities
+* **Transitions-based Scoring**: Uses status transitions (`✓ ✗ ✓ ✗` = 100% flakiness, `✓ ✓ ✓` = 0% flakiness).
+* **Multi-format support**: JUnit XML (pytest, Maven), Jest JSON (`--json`), Playwright JSON.
+* **Auto-detection**: Automatically matches files to the correct parser.
+
+### 🚦 CLI Usage
+```bash
+# Analyze JUnit XML reports
+flaky analyze "results/run-*.xml"
+
+# Analyze with custom threshold (default: 10%)
+flaky analyze "results/*.xml" -t 20
+
+# Require minimum 3 runs to calculate flakiness
+flaky analyze "results/*.xml" -m 3
+```
+
+---
+
+## 🛠️ Build and Test
+
+### Compile Project
+```bash
+npm install
+npm run build
+```
+
+### Run Scrubber & Parser Validation Sandbox
+```bash
+# Simulates zip parsing and verifies AST scrubbing masks PII
+npx ts-node src/test-scrub-parse.ts
+```
+
+## 📄 License
+MIT

@@ -7,7 +7,7 @@ A hands-on repository documenting practical SDET AI automation experiments, patt
 | Project | Language | Description |
 |---------|----------|-------------|
 | [testdata-generator-python](./testdata-generator-python) | Python | CLI tool for generating realistic test data (users, addresses, payments, etc.) in JSON, CSV, SQL formats |
-| [flaky-test-analyzer-typescript](./flaky-test-analyzer-typescript) | TypeScript | Analyze test results across multiple runs to identify flaky tests with flakiness scoring |
+| [flaky-test-analyzer-typescript](./flaky-test-analyzer-typescript) | TypeScript | Analyze test results across multiple runs to identify flaky tests with flakiness scoring and LLM root cause analysis |
 | [personaplay-evaluator-typescript](./personaplay-evaluator-typescript) | TypeScript | E2E agent-to-agent Conversational AI Evaluator & Red-Teaming Engine using Playwright and Gemini as an LLM-as-a-Judge |
 
 ## Repository Structure
@@ -15,9 +15,10 @@ A hands-on repository documenting practical SDET AI automation experiments, patt
 ```
 sdet-ai-automation-lab/
 ├── testdata-generator-python/        # Test data generation tool
-├── flaky-test-analyzer-typescript/   # Flaky test detection tool
+├── flaky-test-analyzer-typescript/   # Flaky test detection & TraceRCA tool
 ├── personaplay-evaluator-typescript/ # Conversational AI Evaluator & Red-Teaming Engine
 ├── personaplay_plan.md               # Planning document for PersonaPlay
+├── trace_rca_plan.md                 # Planning document for TraceRCA
 └── README.md                         # This file
 ```
 
