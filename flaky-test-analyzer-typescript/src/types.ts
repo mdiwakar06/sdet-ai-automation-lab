@@ -115,3 +115,86 @@ export interface AnalyzerOptions {
   /** Minimum runs required to calculate flakiness */
   minRuns?: number;
 }
+
+/** TraceRCA diagnostic structures */
+
+export interface ActionLogEntry {
+  step: number;
+  action: string;
+  value?: string;
+  selector?: string;
+  status: 'passed' | 'failed' | 'skipped' | string;
+  duration?: number;
+}
+
+export interface ConsoleLogEntry {
+  level: 'error' | 'warning' | 'info' | string;
+  text: string;
+  timestamp?: number;
+}
+
+export interface NetworkLogEntry {
+  url: string;
+  method: string;
+  status: number;
+  requestHeaders?: Record<string, string>;
+  requestBody?: string;
+  responseHeaders?: Record<string, string>;
+  responseBody?: string;
+}
+
+export interface RawDiagnosticContext {
+  testId: string;
+  testName: string;
+  className?: string;
+  filePath?: string;
+  errorMessage?: string;
+  stackTrace?: string;
+  failedAction?: {
+    name: string;
+    selector?: string;
+    ordinal: number;
+  };
+  recentActions: ActionLogEntry[];
+  consoleLogs: ConsoleLogEntry[];
+  failedRequests: NetworkLogEntry[];
+}
+
+export type FailureClassification = 'App Bug' | 'Test Bug' | 'Infra Flake';
+export type ConfidenceLevel = 'High' | 'Medium' | 'Low';
+
+export interface AIAnalysisResult {
+  classification: FailureClassification;
+  confidence: ConfidenceLevel;
+  summary: string;
+  detailedAnalysis: string;
+  recommendedFix: string;
+}
+
+export interface TraceRCAReport {
+  testId: string;
+  testName: string;
+  filePath?: string;
+  timestamp: Date;
+  rawContext: RawDiagnosticContext;
+  aiAnalysis?: AIAnalysisResult;
+  error?: string; // If parsing/LLM failed
+}
+
+export interface ScrubberConfig {
+  maskValue: string;
+  sensitiveHeaders: string[];
+  sensitiveKeys: string[];
+  customRegexPatterns: Array<{
+    name: string;
+    pattern: string;
+    replacement: string;
+  }>;
+}
+
+export interface TraceRCAConfig {
+  sanitization: ScrubberConfig;
+  analysis: {
+    maxAnalyses: number;
+  };
+}
