@@ -40,6 +40,14 @@ htmlcov/
 .tox/
 .nox/
 
+# Node / TypeScript
+node_modules/
+dist/
+.env
+.env.*
+.tracerca/
+
 # OS
 .DS_Store
 Thumbs.db
+
