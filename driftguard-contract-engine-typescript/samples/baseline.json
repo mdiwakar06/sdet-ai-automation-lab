@@ -1,0 +1,80 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "E-Commerce Customer & Order API",
+    "version": "1.0.0",
+    "description": "Baseline Contract for E-Commerce Backend"
+  },
+  "paths": {
+    "/api/v1/users/{userId}": {
+      "get": {
+        "summary": "Get user profile",
+        "parameters": [
+          { "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["id", "name", "email", "tier", "spendingLimit"],
+                  "properties": {
+                    "id": { "type": "string", "format": "uuid" },
+                    "name": { "type": "string" },
+                    "email": { "type": "string", "format": "email" },
+                    "tier": { "type": "string", "enum": ["STANDARD", "GOLD", "PLATINUM"] },
+                    "spendingLimit": { "type": "number" },
+                    "bio": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      }
+    },
+    "/api/v1/checkout/orders": {
+      "post": {
+        "summary": "Submit new order",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["items", "paymentMethod"],
+                "properties": {
+                  "items": { "type": "array" },
+                  "paymentMethod": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["orderId", "status", "total"],
+                  "properties": {
+                    "orderId": { "type": "string" },
+                    "status": { "type": "string", "enum": ["PENDING", "CONFIRMED"] },
+                    "total": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

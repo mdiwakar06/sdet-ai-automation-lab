@@ -1,0 +1,42 @@
+{
+  "name": "driftguard-contract-engine-typescript",
+  "version": "1.0.0",
+  "description": "Autonomous API Contract Drift Engine & JSON Schema / OpenAPI 3.1 Comparator with AI Remediation",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "bin": {
+    "driftguard": "./dist/bin/driftguard.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "tsx tests/run-all.ts",
+    "driftguard": "tsx bin/driftguard.ts"
+  },
+  "keywords": [
+    "openapi",
+    "json-schema",
+    "api-testing",
+    "contract-testing",
+    "drift-detection",
+    "playwright",
+    "sdet",
+    "breaking-changes"
+  ],
+  "author": "SDET Team",
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "picocolors": "^1.1.0",
+    "playwright": "^1.47.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.16.5",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
+  }
+}
