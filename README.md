@@ -4,13 +4,13 @@ A hands-on repository documenting practical SDET AI automation experiments, patt
 
 ## Projects
 
-| Project | Language | Description |
-|---------|----------|-------------|
-| [testdata-generator-python](./testdata-generator-python) | Python | CLI tool for generating realistic test data (users, addresses, payments, etc.) in JSON, CSV, SQL formats |
-| [flaky-test-analyzer-typescript](./flaky-test-analyzer-typescript) | TypeScript | Analyze test results across multiple runs to identify flaky tests with flakiness scoring and LLM root cause analysis |
-| [personaplay-evaluator-typescript](./personaplay-evaluator-typescript) | TypeScript | E2E agent-to-agent Conversational AI Evaluator & Red-Teaming Engine using Playwright and Gemini as an LLM-as-a-Judge |
-| [driftguard-contract-engine-typescript](./driftguard-contract-engine-typescript) | TypeScript | Zero-Config Observation-Driven API Contract Drift Engine & OpenAPI 3.1 Comparator |
-| [synthdb-relational-seeder-typescript](./synthdb-relational-seeder-typescript) | TypeScript | High-Fidelity Deterministic Relational Synthetic Database Seeder & Topological DAG Generator |
+| Project | Language | Test Suite Status | Description |
+|---------|----------|:-----------------:|-------------|
+| [flaky-test-analyzer-typescript](./flaky-test-analyzer-typescript) | TypeScript | [✅ 5/5 Passed (110 assertions)](./flaky-test-analyzer-typescript/TEST_RESULTS.md) | AI-powered Playwright Trace Root Cause Analyzer (TraceRCA) & Historical Flakiness Scorer |
+| [personaplay-evaluator-typescript](./personaplay-evaluator-typescript) | TypeScript | [✅ 5/5 Passed (93 assertions)](./personaplay-evaluator-typescript/TEST_RESULTS.md) | E2E Agent-to-Agent Conversational AI Evaluator & Red-Teaming Engine with LLM-as-a-Judge Audits |
+| [driftguard-contract-engine-typescript](./driftguard-contract-engine-typescript) | TypeScript | [✅ 5/5 Passed (53 assertions)](./driftguard-contract-engine-typescript/TEST_RESULTS.md) | Zero-Config Observation-Driven API Contract Drift Engine & OpenAPI 3.1 Comparator |
+| [synthdb-relational-seeder-typescript](./synthdb-relational-seeder-typescript) | TypeScript | [✅ 5/5 Passed (1,180 assertions)](./synthdb-relational-seeder-typescript/TEST_RESULTS.md) | High-Fidelity Deterministic Relational Synthetic Database Seeder & Topological DAG Generator |
+| [testdata-generator-python](./testdata-generator-python) | Python | ✅ Standalone Utility | CLI tool for generating realistic test data (users, addresses, payments, etc.) in JSON, CSV, SQL formats |
 
 ## Repository Structure
 

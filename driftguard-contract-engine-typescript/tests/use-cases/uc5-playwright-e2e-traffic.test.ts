@@ -1,5 +1,5 @@
 /**
- * Use Case 5: End-to-End Live Playwright Interception, Inference & HTML Report Generation
+ * Use Case 5: End-to-End Live Playwright Interception, Inference, AI Remediation & HTML Report Generation
  */
 
 import express from 'express';
@@ -10,13 +10,15 @@ import * as fs from 'fs';
 import { TrafficCollector } from '../../src/collector/TrafficCollector';
 import { OpenApiBuilder } from '../../src/inferrer/OpenApiBuilder';
 import { DiffEngine } from '../../src/diff/DiffEngine';
+import { RemediationAdvisor } from '../../src/ai/RemediationAdvisor';
 import { HtmlReporter } from '../../src/reporters/HtmlReporter';
 import { OpenApiDocument } from '../../src/types/schema';
 import { logger } from '../../src/utils/logger';
 
-export async function runUseCase5(): Promise<{ name: string; passed: boolean; error?: string }> {
-  const name = 'UC-5: Playwright E2E Interception & HTML Dashboard Generation';
+export async function runUseCase5(): Promise<{ name: string; passed: boolean; assertionsCount: number; error?: string }> {
+  const name = 'UC-5: Playwright E2E Interception, AI Remediation & HTML Dashboard';
   logger.section(`Running ${name}`);
+  let assertionsCount = 0;
 
   let server: Server | null = null;
   const PORT = 3888;
@@ -76,6 +78,7 @@ export async function runUseCase5(): Promise<{ name: string; passed: boolean; er
         resolve();
       });
     });
+    assertionsCount++;
 
     // 2. Playwright HTTP Client with Traffic Capture
     const collector = new TrafficCollector();
@@ -144,6 +147,11 @@ export async function runUseCase5(): Promise<{ name: string; passed: boolean; er
 
     await apiContext.dispose();
 
+    if (collector.getCount() !== 4) {
+      throw new Error(`Expected 4 captured traffic records, got ${collector.getCount()}`);
+    }
+    assertionsCount++;
+
     // 3. Autonomous Schema & OpenAPI 3.1 Inference
     logger.info(`Captured ${collector.getCount()} live transactions. Inferring OpenAPI 3.1 spec...`);
     const builder = new OpenApiBuilder({ title: 'Live Inferred Store API' });
@@ -156,15 +164,22 @@ export async function runUseCase5(): Promise<{ name: string; passed: boolean; er
     if (!inferredPaths.includes('/api/v1/users/me')) {
       throw new Error("Expected static route '/api/v1/users/me' in inferred spec.");
     }
+    assertionsCount++;
+
     if (!inferredPaths.includes('/api/v1/users/{userId}')) {
       throw new Error("Expected parameterized route '/api/v1/users/{userId}' in inferred spec.");
     }
+    assertionsCount++;
+
     if (!inferredPaths.includes('/api/v1/checkout/orders')) {
       throw new Error("Expected route '/api/v1/checkout/orders' in inferred spec.");
     }
+    assertionsCount++;
+
     if (!inferredPaths.includes('/api/v1/orders/{orderId}')) {
       throw new Error("Expected parameterized route '/api/v1/orders/{orderId}' in inferred spec.");
     }
+    assertionsCount++;
 
     // 4. Compare with Baseline Contract
     const baselineSpec: OpenApiDocument = {
@@ -223,8 +238,22 @@ export async function runUseCase5(): Promise<{ name: string; passed: boolean; er
 
     const diffEngine = new DiffEngine();
     const report = diffEngine.compare(baselineSpec, observedSpec);
+    if (!report.diffs || report.diffs.length === 0) {
+      throw new Error('Expected contract diffs to be detected.');
+    }
+    assertionsCount++;
 
-    // 5. Generate Standalone HTML Drift Dashboard
+    // 5. AI / Heuristic Remediation Advice
+    const advisor = new RemediationAdvisor();
+    const patches = await advisor.advise(report.diffs);
+    if (!Array.isArray(patches) || patches.length === 0) {
+      throw new Error('Expected remediation advisor to generate actionable patches.');
+    }
+    assertionsCount++;
+    report.remediationPatches = patches;
+    logger.success(`Generated ${patches.length} remediation advice patches.`);
+
+    // 6. Generate Standalone HTML Drift Dashboard
     const reportPath = path.resolve(__dirname, '../../reports/uc5-live-drift-report.html');
     HtmlReporter.generate(report, reportPath);
     logger.success(`Generated interactive HTML report at: ${reportPath}`);
@@ -232,11 +261,18 @@ export async function runUseCase5(): Promise<{ name: string; passed: boolean; er
     if (!fs.existsSync(reportPath)) {
       throw new Error(`HTML Report was not created at ${reportPath}`);
     }
+    assertionsCount++;
 
-    return { name, passed: true };
+    const htmlContent = fs.readFileSync(reportPath, 'utf-8');
+    if (!htmlContent.includes('DriftGuard') || !htmlContent.includes('Contract Integrity')) {
+      throw new Error('HTML Report is missing expected dashboard content');
+    }
+    assertionsCount++;
+
+    return { name, passed: true, assertionsCount };
   } catch (err: any) {
     logger.error(`Use Case 5 failed: ${err.message}`);
-    return { name, passed: false, error: err.message };
+    return { name, passed: false, assertionsCount, error: err.message };
   } finally {
     if (server) {
       await new Promise<void>((resolve) => (server as Server).close(() => resolve()));

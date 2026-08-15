@@ -6,9 +6,10 @@ import { DiffEngine } from '../../src/diff/DiffEngine';
 import { OpenApiDocument } from '../../src/types/schema';
 import { logger } from '../../src/utils/logger';
 
-export async function runUseCase4(): Promise<{ name: string; passed: boolean; error?: string }> {
+export async function runUseCase4(): Promise<{ name: string; passed: boolean; assertionsCount: number; error?: string }> {
   const name = 'UC-4: Backward-Compatible Evolution & Additive Contracts';
   logger.section(`Running ${name}`);
+  let assertionsCount = 0;
 
   try {
     // 1. Baseline Specification
@@ -121,6 +122,7 @@ export async function runUseCase4(): Promise<{ name: string; passed: boolean; er
     if (!newEndpointDiff || newEndpointDiff.severity !== 'NON_BREAKING_ADDITION') {
       throw new Error("Expected BR-02 (New endpoint added as NON_BREAKING_ADDITION) was not detected.");
     }
+    assertionsCount++;
     logger.success(`Verified BR-02: ${newEndpointDiff.description}`);
 
     // Verify Rule BR-04: New HTTP method POST added (NON_BREAKING_ADDITION)
@@ -128,6 +130,7 @@ export async function runUseCase4(): Promise<{ name: string; passed: boolean; er
     if (!newMethodDiff || newMethodDiff.severity !== 'NON_BREAKING_ADDITION') {
       throw new Error("Expected BR-04 (New method added as NON_BREAKING_ADDITION) was not detected.");
     }
+    assertionsCount++;
     logger.success(`Verified BR-04: ${newMethodDiff.description}`);
 
     // Verify Rule BR-09: Additive response properties (NON_BREAKING_ADDITION)
@@ -137,24 +140,39 @@ export async function runUseCase4(): Promise<{ name: string; passed: boolean; er
     if (!ratingFieldDiff || ratingFieldDiff.severity !== 'NON_BREAKING_ADDITION') {
       throw new Error("Expected BR-09 (Additive response property as NON_BREAKING_ADDITION) was not detected.");
     }
+    assertionsCount++;
     logger.success(`Verified BR-09: ${ratingFieldDiff.description}`);
+
+    const tagsFieldDiff = report.diffs.find(
+      (d) => d.ruleId === 'BR-09' && d.pointer.includes('tags')
+    );
+    if (!tagsFieldDiff || tagsFieldDiff.severity !== 'NON_BREAKING_ADDITION') {
+      throw new Error("Expected BR-09 (Additive response property 'tags') was not detected.");
+    }
+    assertionsCount++;
+    logger.success(`Verified BR-09: ${tagsFieldDiff.description}`);
 
     // Verify Overall Contract Status is COMPATIBLE
     if (report.summary.isContractBroken) {
       throw new Error('Expected report.summary.isContractBroken to be false for backward-compatible evolution.');
     }
+    assertionsCount++;
+
     if (report.summary.criticalBreakingCount !== 0) {
       throw new Error(`Expected 0 critical breaking changes, found ${report.summary.criticalBreakingCount}`);
     }
+    assertionsCount++;
+
     if (report.summary.score !== 100) {
       throw new Error(`Expected perfect score (100), got: ${report.summary.score}`);
     }
+    assertionsCount++;
 
     logger.success(`Verified 100% contract compatibility score: ${report.summary.score}%`);
 
-    return { name, passed: true };
+    return { name, passed: true, assertionsCount };
   } catch (err: any) {
     logger.error(`Use Case 4 failed: ${err.message}`);
-    return { name, passed: false, error: err.message };
+    return { name, passed: false, assertionsCount, error: err.message };
   }
 }

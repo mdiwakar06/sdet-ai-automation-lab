@@ -33,7 +33,7 @@
         </div>
       </div>
       <div class="flex items-center space-x-4">
-        <span class="text-xs text-slate-400">Generated: 14/8/2026, 8:37:00 pm</span>
+        <span class="text-xs text-slate-400">Generated: 15/8/2026, 4:09:35 pm</span>
         <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
           <span class="w-2 h-2 rounded-full mr-2 bg-red-400 animate-pulse"></span>
           CONTRACT DRIFTED (FAIL)
@@ -151,9 +151,9 @@
     <!-- Raw JSON Modal / Container -->
     <div id="rawJsonContainer" class="hidden p-4 rounded-2xl bg-slate-950 border border-slate-800">
       <pre class="text-xs text-slate-300 overflow-x-auto max-h-96"><code>{
-  &quot;id&quot;: &quot;report-1786720020627&quot;,
+  &quot;id&quot;: &quot;report-1786790375181&quot;,
   &quot;title&quot;: &quot;DriftGuard API Contract Drift Report&quot;,
-  &quot;generatedAt&quot;: &quot;2026-08-14T15:07:00.627Z&quot;,
+  &quot;generatedAt&quot;: &quot;2026-08-15T10:39:35.181Z&quot;,
   &quot;baselineVersion&quot;: &quot;1.0.0&quot;,
   &quot;observedVersion&quot;: &quot;1.0.0&quot;,
   &quot;summary&quot;: {
@@ -675,7 +675,27 @@
         }
       }
     }
-  }
+  },
+  &quot;remediationPatches&quot;: [
+    {
+      &quot;diffId&quot;: &quot;diff-2&quot;,
+      &quot;ruleId&quot;: &quot;BR-16&quot;,
+      &quot;title&quot;: &quot;BR-16: New required path parameter &#039;userId&#039; added to &#039;GET /api/v1/users/{userId}&#039;.&quot;,
+      &quot;rootCause&quot;: &quot;Divergence between baseline contract and runtime traffic at /paths/~1api~1v1~1users~1{userId}/get/parameters/userId.&quot;,
+      &quot;recommendedAction&quot;: &quot;Change parameter requirement to optional or supply a default value on the server.&quot;,
+      &quot;clientCompatibilityRisk&quot;: &quot;HIGH&quot;,
+      &quot;codeSnippetFix&quot;: &quot;// Review schema contract pointer: /paths/~1api~1v1~1users~1{userId}/get/parameters/userId\n// Expected: \&quot;Optional or parameter absent\&quot;\n// Observed: \&quot;Required path parameter &#039;userId&#039;\&quot;&quot;
+    },
+    {
+      &quot;diffId&quot;: &quot;diff-3&quot;,
+      &quot;ruleId&quot;: &quot;BR-07&quot;,
+      &quot;title&quot;: &quot;BR-07: Required response property &#039;phoneNumber&#039; missing from observed payload.&quot;,
+      &quot;rootCause&quot;: &quot;Divergence between baseline contract and runtime traffic at /paths/~1api~1v1~1users~1{userId}/get/responses/200/content/application~1json/schema/properties/phoneNumber.&quot;,
+      &quot;recommendedAction&quot;: &quot;Restore the required field in the response payload or provide a default fallback value.&quot;,
+      &quot;clientCompatibilityRisk&quot;: &quot;HIGH&quot;,
+      &quot;codeSnippetFix&quot;: &quot;// Ensure response model includes default fallback\ninterface ResponseDTO {\n  // Required legacy field\n  phoneNumber: string | null;\n}&quot;
+    }
+  ]
 }</code></pre>
     </div>
 

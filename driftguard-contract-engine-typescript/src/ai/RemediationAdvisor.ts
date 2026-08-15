@@ -23,7 +23,10 @@ export class RemediationAdvisor {
 
     if (aiClient.isAvailable()) {
       try {
-        const aiPatches = await this.generateAiRemediations(targetDiffs);
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('AI Advisor request timed out after 5000ms')), 5000)
+        );
+        const aiPatches = await Promise.race([this.generateAiRemediations(targetDiffs), timeoutPromise]);
         return aiPatches;
       } catch (err: any) {
         logger.debug(`Falling back to heuristic remediation generator: ${err.message}`);

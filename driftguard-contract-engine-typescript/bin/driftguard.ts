@@ -33,7 +33,7 @@ program
   .option('-h, --html <path>', 'Output path for interactive HTML dashboard')
   .option('-j, --json <path>', 'Output path for raw JSON drift report')
   .option('--ai', 'Enable AI-powered remediation advice via Gemini')
-  .option('--fail-on-breaking', 'Exit with non-zero code if critical breaking changes exist', true)
+  .option('--no-fail-on-breaking', 'Do not exit with non-zero code if critical breaking changes exist')
   .action(async (baselinePath, observedPath, options) => {
     try {
       if (!fs.existsSync(baselinePath)) {

@@ -6,9 +6,10 @@ import { DiffEngine } from '../../src/diff/DiffEngine';
 import { OpenApiDocument } from '../../src/types/schema';
 import { logger } from '../../src/utils/logger';
 
-export async function runUseCase3(): Promise<{ name: string; passed: boolean; error?: string }> {
+export async function runUseCase3(): Promise<{ name: string; passed: boolean; assertionsCount: number; error?: string }> {
   const name = 'UC-3: Enum Constraints, Status Codes & Nullability Drift';
   logger.section(`Running ${name}`);
+  let assertionsCount = 0;
 
   try {
     // 1. Baseline Specification
@@ -91,45 +92,59 @@ export async function runUseCase3(): Promise<{ name: string; passed: boolean; er
     const report = diffEngine.compare(baselineSpec, observedSpec);
 
     logger.info(`Total diffs detected: ${report.diffs.length}`);
+    if (report.diffs.length !== 5) {
+      throw new Error(`Expected exactly 5 diffs, got ${report.diffs.length}`);
+    }
+    assertionsCount++;
 
     // Verify Rule BR-13: Enum value 'SUSPENDED' removed (CRITICAL_BREAKING)
     const enumRemovedDiff = report.diffs.find((d) => d.ruleId === 'BR-13');
-    if (!enumRemovedDiff) {
-      throw new Error("Expected BR-13 (Enum value 'SUSPENDED' removed) was not detected.");
+    if (!enumRemovedDiff || enumRemovedDiff.severity !== 'CRITICAL_BREAKING') {
+      throw new Error("Expected BR-13 (Enum value 'SUSPENDED' removed as CRITICAL_BREAKING) was not detected.");
     }
+    assertionsCount++;
     logger.success(`Verified BR-13: ${enumRemovedDiff.description}`);
 
     // Verify Rule BR-14: Enum value 'ARCHIVED' added (WARNING_RISK)
     const enumAddedDiff = report.diffs.find((d) => d.ruleId === 'BR-14');
-    if (!enumAddedDiff) {
-      throw new Error("Expected BR-14 (Enum value 'ARCHIVED' added) was not detected.");
+    if (!enumAddedDiff || enumAddedDiff.severity !== 'WARNING_RISK') {
+      throw new Error("Expected BR-14 (Enum value 'ARCHIVED' added as WARNING_RISK) was not detected.");
     }
+    assertionsCount++;
     logger.success(`Verified BR-14: ${enumAddedDiff.description}`);
 
     // Verify Rule BR-05: Expected status code '404' removed (CRITICAL_BREAKING)
     const status404Diff = report.diffs.find((d) => d.ruleId === 'BR-05' && d.statusCode === '404');
-    if (!status404Diff) {
-      throw new Error("Expected BR-05 (Status code '404' removed) was not detected.");
+    if (!status404Diff || status404Diff.severity !== 'CRITICAL_BREAKING') {
+      throw new Error("Expected BR-05 (Status code '404' removed as CRITICAL_BREAKING) was not detected.");
     }
+    assertionsCount++;
     logger.success(`Verified BR-05: ${status404Diff.description}`);
 
     // Verify Rule BR-06: New status code '500' added (WARNING_RISK)
     const status500Diff = report.diffs.find((d) => d.ruleId === 'BR-06' && d.statusCode === '500');
-    if (!status500Diff) {
-      throw new Error("Expected BR-06 (Status code '500' added) was not detected.");
+    if (!status500Diff || status500Diff.severity !== 'WARNING_RISK') {
+      throw new Error("Expected BR-06 (Status code '500' added as WARNING_RISK) was not detected.");
     }
+    assertionsCount++;
     logger.success(`Verified BR-06: ${status500Diff.description}`);
 
     // Verify Rule BR-11: Nullability widened for 'notes' (CRITICAL_BREAKING)
     const nullabilityDiff = report.diffs.find((d) => d.ruleId === 'BR-11');
-    if (!nullabilityDiff) {
-      throw new Error("Expected BR-11 (Nullability widened for 'notes') was not detected.");
+    if (!nullabilityDiff || nullabilityDiff.severity !== 'CRITICAL_BREAKING') {
+      throw new Error("Expected BR-11 (Nullability widened for 'notes' as CRITICAL_BREAKING) was not detected.");
     }
+    assertionsCount++;
     logger.success(`Verified BR-11: ${nullabilityDiff.description}`);
 
-    return { name, passed: true };
+    if (!report.summary.isContractBroken) {
+      throw new Error('Expected report.summary.isContractBroken to be true.');
+    }
+    assertionsCount++;
+
+    return { name, passed: true, assertionsCount };
   } catch (err: any) {
     logger.error(`Use Case 3 failed: ${err.message}`);
-    return { name, passed: false, error: err.message };
+    return { name, passed: false, assertionsCount, error: err.message };
   }
 }

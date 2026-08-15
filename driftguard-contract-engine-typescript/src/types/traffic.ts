@@ -39,7 +39,7 @@ export interface HarEntry {
     headers: Array<{ name: string; value: string }>;
     queryString?: Array<{ name: string; value: string }>;
     postData?: {
-      mimeType: string;
+      mimeType?: string;
       text?: string;
     };
   };
@@ -47,9 +47,9 @@ export interface HarEntry {
     status: number;
     statusText?: string;
     headers: Array<{ name: string; value: string }>;
-    content: {
+    content?: {
       size?: number;
-      mimeType: string;
+      mimeType?: string;
       text?: string;
     };
   };
