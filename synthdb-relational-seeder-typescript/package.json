@@ -1,0 +1,43 @@
+{
+  "name": "synthdb",
+  "version": "1.0.0",
+  "description": "High-Fidelity Deterministic Relational Synthetic Database Generator and Seeder",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "bin": {
+    "synthdb": "./bin/synthdb.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "tsx tests/run-all.ts",
+    "synthdb": "tsx bin/synthdb.ts",
+    "start": "tsx src/index.ts"
+  },
+  "keywords": [
+    "synthetic-data",
+    "database-seeder",
+    "ddl-parser",
+    "topological-sort",
+    "relational-database",
+    "sdet",
+    "testing",
+    "prng",
+    "erd"
+  ],
+  "author": "Diwakar Reddy M <SynthDBCoreBuilder>",
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.0",
+    "better-sqlite3": "^11.8.1",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.7",
+    "picocolors": "^1.1.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^20.17.19",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}

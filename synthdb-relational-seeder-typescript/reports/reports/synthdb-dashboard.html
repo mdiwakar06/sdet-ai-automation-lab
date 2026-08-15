@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SynthDB - Schema ERD & Synthetic Data Explorer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdfa',
+              500: '#14b8a6',
+              600: '#0d9488',
+              900: '#134e4a'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .mermaid svg {
+      max-width: 100% !important;
+      height: auto !important;
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans">
+  <!-- Top Navigation -->
+  <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-cyan-500 flex items-center justify-center font-black text-xl text-slate-950 shadow-lg shadow-teal-500/20">
+          ⚡
+        </div>
+        <div>
+          <h1 class="text-lg font-bold bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">
+            SynthDB Interactive Dashboard
+          </h1>
+          <p class="text-xs text-slate-400">High-Fidelity Synthetic Database Studio</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-teal-950 text-teal-300 border border-teal-800">
+          Dialect: <strong class="ml-1 uppercase" id="meta-dialect">generic</strong>
+        </span>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-cyan-950 text-cyan-300 border border-cyan-800">
+          Seed: <strong class="ml-1" id="meta-seed">42</strong>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
+    <!-- Metric Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+        <div class="text-xs font-medium text-slate-400">Total Tables</div>
+        <div class="text-3xl font-extrabold text-white mt-2">8</div>
+        <div class="text-xs text-teal-400 mt-1">✓ Relational Entities</div>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+        <div class="text-xs font-medium text-slate-400">Total Rows Generated</div>
+        <div class="text-3xl font-extrabold text-teal-400 mt-2">200</div>
+        <div class="text-xs text-slate-400 mt-1">23,842 rows/sec</div>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+        <div class="text-xs font-medium text-slate-400">Foreign Keys</div>
+        <div class="text-3xl font-extrabold text-cyan-400 mt-2">8</div>
+        <div class="text-xs text-slate-400 mt-1">100% Referential Integrity</div>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+        <div class="text-xs font-medium text-slate-400">Cycles Resolved</div>
+        <div class="text-3xl font-extrabold text-amber-400 mt-2">0</div>
+        <div class="text-xs text-slate-400 mt-1">2-Pass Update Plan</div>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+        <div class="text-xs font-medium text-slate-400">Generation Time</div>
+        <div class="text-3xl font-extrabold text-emerald-400 mt-2">8.4 ms</div>
+        <div class="text-xs text-slate-400 mt-1">Deterministic PRNG</div>
+      </div>
+    </div>
+
+    <!-- Tabs Container -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+      <div class="border-b border-slate-800 px-6 flex space-x-6">
+        <button onclick="switchTab('erd')" id="tab-btn-erd" class="py-4 text-sm font-semibold border-b-2 border-teal-500 text-teal-400 focus:outline-none">
+          📊 Schema ERD Diagram
+        </button>
+        <button onclick="switchTab('data')" id="tab-btn-data" class="py-4 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 focus:outline-none">
+          🔍 Synthetic Data Explorer
+        </button>
+        <button onclick="switchTab('dag')" id="tab-btn-dag" class="py-4 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 focus:outline-none">
+          🔀 Topological DAG & Cycles
+        </button>
+        <button onclick="switchTab('ddl')" id="tab-btn-ddl" class="py-4 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 focus:outline-none">
+          📄 Schema DDL
+        </button>
+      </div>
+
+      <!-- Tab: Schema ERD -->
+      <div id="tab-content-erd" class="p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-bold text-slate-200">Interactive Entity Relationship Diagram (ERD)</h2>
+          <span class="text-xs text-slate-400">Rendered with Mermaid.js</span>
+        </div>
+        <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 overflow-x-auto">
+          <pre class="mermaid text-center">
+erDiagram
+  USERS {
+    integer id PK
+    varchar email UK
+    varchar password_hash
+    varchar first_name
+    varchar last_name
+    varchar role
+    boolean is_active
+    timestamp created_at
+    timestamp updated_at
+  }
+  USER_PROFILES {
+    integer id PK
+    integer user_id FK
+    varchar phone_number
+    varchar street_address
+    varchar city
+    varchar state
+    varchar postal_code
+    varchar country
+    varchar avatar_url
+    timestamp created_at
+    timestamp updated_at
+  }
+  CATEGORIES {
+    integer id PK
+    varchar name UK
+    varchar slug UK
+    text description
+    timestamp created_at
+  }
+  PRODUCTS {
+    integer id PK
+    integer category_id FK
+    varchar sku UK
+    varchar name
+    varchar slug UK
+    text description
+    decimal price
+    decimal discount_percentage
+    integer stock_quantity
+    boolean is_active
+    timestamp created_at
+    timestamp updated_at
+  }
+  ORDERS {
+    integer id PK
+    integer user_id FK
+    varchar order_status
+    decimal total_amount
+    text shipping_address
+    timestamp created_at
+    timestamp updated_at
+    timestamp shipped_at
+    timestamp delivered_at
+  }
+  ORDER_ITEMS {
+    integer id PK
+    integer order_id FK
+    integer product_id FK
+    integer quantity
+    decimal unit_price
+    decimal subtotal
+    timestamp created_at
+  }
+  PRODUCT_REVIEWS {
+    integer id PK
+    integer product_id FK
+    integer user_id FK
+    integer rating
+    varchar title
+    text review_text
+    timestamp created_at
+  }
+  PAYMENTS {
+    integer id PK
+    integer order_id FK
+    varchar payment_method
+    varchar card_number
+    decimal amount
+    varchar status
+    varchar transaction_reference UK
+    timestamp created_at
+    timestamp updated_at
+  }
+  USERS ||--o{ USER_PROFILES : "references"
+  CATEGORIES ||--o{ PRODUCTS : "references"
+  USERS ||--o{ ORDERS : "references"
+  ORDERS ||--o{ ORDER_ITEMS : "references"
+  PRODUCTS ||--o{ ORDER_ITEMS : "references"
+  PRODUCTS ||--o{ PRODUCT_REVIEWS : "references"
+  USERS ||--o{ PRODUCT_REVIEWS : "references"
+  ORDERS ||--o{ PAYMENTS : "references"
+          </pre>
+        </div>
+      </div>
+
+      <!-- Tab: Data Explorer -->
+      <div id="tab-content-data" class="p-6 hidden space-y-4">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center space-x-3 w-full sm:w-auto">
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Select Table:</label>
+            <select id="tableSelector" onchange="renderSelectedTable()" class="bg-slate-950 border border-slate-700 text-slate-200 text-sm rounded-lg px-4 py-2 focus:ring-teal-500 focus:border-teal-500">
+              <option value="users">users (25 rows)</option>
+<option value="user_profiles">user_profiles (25 rows)</option>
+<option value="categories">categories (25 rows)</option>
+<option value="products">products (25 rows)</option>
+<option value="orders">orders (25 rows)</option>
+<option value="order_items">order_items (25 rows)</option>
+<option value="product_reviews">product_reviews (25 rows)</option>
+<option value="payments">payments (25 rows)</option>
+            </select>
+          </div>
+          <div class="w-full sm:w-72">
+            <input type="text" id="tableSearch" onkeyup="filterTableRows()" placeholder="Search generated data..." class="w-full bg-slate-950 border border-slate-700 text-slate-200 text-sm rounded-lg px-4 py-2 focus:ring-teal-500 focus:border-teal-500">
+          </div>
+        </div>
+
+        <!-- Table Data Container -->
+        <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950">
+          <table class="w-full text-left text-sm text-slate-300" id="previewTable">
+            <thead class="text-xs uppercase bg-slate-900/80 text-teal-400 border-b border-slate-800" id="previewTableHead">
+              <!-- Rendered via JS -->
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 font-mono text-xs" id="previewTableBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab: DAG & Cycles -->
+      <div id="tab-content-dag" class="p-6 hidden space-y-6">
+        <div>
+          <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider mb-2">Deterministic Topological Insertion Order</h3>
+          <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-wrap items-center gap-2">
+            
+        <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-mono font-medium bg-slate-900 border border-slate-800 text-teal-300">
+          <span class="w-4 h-4 rounded-full bg-teal-900/60 text-teal-400 flex items-center justify-center mr-1.5 text-[10px]">1</span>
+          categories
+        </span>
+       <span class="text-slate-600 font-bold">➔</span> 
+        <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-mono font-medium bg-slate-900 border border-slate-800 text-teal-300">
+          <span class="w-4 h-4 rounded-full bg-teal-900/60 text-teal-400 flex items-center justify-center mr-1.5 text-[10px]">2</span>
+          products
+        </span>
+       <span class="text-slate-600 font-bold">➔</span> 
+        <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-mono font-medium bg-slate-900 border border-slate-800 text-teal-300">
+          <span class="w-4 h-4 rounded-full bg-teal-900/60 text-teal-400 flex items-center justify-center mr-1.5 text-[10px]">3</span>
+          users
+        </span>
+       <span class="text-slate-600 font-bold">➔</span> 
+        <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-mono font-medium bg-slate-900 border border-slate-800 text-teal-300">
+          <span class="w-4 h-4 rounded-full bg-teal-900/60 text-teal-400 flex items-center justify-center mr-1.5 text-[10px]">4</span>
+          orders
+        </span>
+       <span class="text-slate-600 font-bold">➔</span> 
+        <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-mono font-medium bg-slate-900 border border-slate-800 text-teal-300">
+          <span class="w-4 h-4 rounded-full bg-teal-900/60 text-teal-400 flex items-center justify-center mr-1.5 text-[10px]">5</span>
+          order_items
+        </span>
+       <span class="text-slate-600 font-bold">➔</span> 
+        <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-mono font-medium bg-slate-900 border border-slate-800 text-teal-300">
+          <span class="w-4 h-4 rounded-full bg-teal-900/60 text-teal-400 flex items-center justify-center mr-1.5 text-[10px]">6</span>
+          payments
+        </span>
+       <span class="text-slate-600 font-bold">➔</span> 
+        <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-mono font-medium bg-slate-900 border border-slate-800 text-teal-300">
+          <span class="w-4 h-4 rounded-full bg-teal-900/60 text-teal-400 flex items-center justify-center mr-1.5 text-[10px]">7</span>
+          product_reviews
+        </span>
+       <span class="text-slate-600 font-bold">➔</span> 
+        <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-mono font-medium bg-slate-900 border border-slate-800 text-teal-300">
+          <span class="w-4 h-4 rounded-full bg-teal-900/60 text-teal-400 flex items-center justify-center mr-1.5 text-[10px]">8</span>
+          user_profiles
+        </span>
+      
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider mb-2">Cycle Resolution & 2-Pass Updates</h3>
+          <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+            <div class="text-xs text-slate-400">✓ No circular foreign key dependencies detected. Standard 1-pass topological insertion.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: DDL -->
+      <div id="tab-content-ddl" class="p-6 hidden">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold text-slate-400 uppercase">Input Schema DDL</span>
+        </div>
+        <pre class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs font-mono text-slate-300 overflow-x-auto max-h-96">-- ====================================================================
+-- SynthDB Sample: E-Commerce Storefront DDL (PostgreSQL Dialect)
+-- ====================================================================
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    role VARCHAR(50) DEFAULT 'customer',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE user_profiles (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    phone_number VARCHAR(50),
+    street_address VARCHAR(255),
+    city VARCHAR(100),
+    state VARCHAR(50),
+    postal_code VARCHAR(20),
+    country VARCHAR(50) DEFAULT 'USA',
+    avatar_url VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    slug VARCHAR(120) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE products (
+    id SERIAL PRIMARY KEY,
+    category_id INTEGER NOT NULL REFERENCES categories(id),
+    sku VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    price DECIMAL(10, 2) NOT NULL,
+    discount_percentage DECIMAL(5, 2) DEFAULT 0.00,
+    stock_quantity INTEGER NOT NULL DEFAULT 10,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    order_status VARCHAR(50) DEFAULT 'pending',
+    total_amount DECIMAL(10, 2) NOT NULL,
+    shipping_address TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE,
+    shipped_at TIMESTAMP WITH TIME ZONE,
+    delivered_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE order_items (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES products(id),
+    quantity INTEGER NOT NULL DEFAULT 1,
+    unit_price DECIMAL(10, 2) NOT NULL,
+    subtotal DECIMAL(10, 2) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE product_reviews (
+    id SERIAL PRIMARY KEY,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    rating INTEGER NOT NULL CHECK (rating &gt;= 1 AND rating &lt;= 5),
+    title VARCHAR(200),
+    review_text TEXT,
+    created_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE payments (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER NOT NULL UNIQUE REFERENCES orders(id),
+    payment_method VARCHAR(50) DEFAULT 'credit_card',
+    card_number VARCHAR(30) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    status VARCHAR(50) DEFAULT 'settled',
+    transaction_reference VARCHAR(100) NOT NULL UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE
+);
+</pre>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-slate-900 border-t border-slate-800 py-4 text-center text-xs text-slate-500">
+    Generated by SynthDB • Autonomous Relational Synthetic Data Engine
+  </footer>
+
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+
+    const DATASETS = {"categories":{"columns":["id","name","slug","description","created_at"],"rows":[{"created_at":null,"id":1,"name":"name_1_833","slug":"name-1-833-859","description":"Detailed synthetic description for categories record 1. Features high-performance architecture and reliability."},{"created_at":"2024-11-29 01:35:37","id":2,"name":"name_2_985","slug":"name-2-985-726","description":"Detailed synthetic description for categories record 2. Features high-performance architecture and reliability."},{"created_at":null,"id":3,"name":"name_3_904","slug":"name-3-904-574","description":"Detailed synthetic description for categories record 3. Features high-performance architecture and reliability."},{"created_at":null,"id":4,"name":"name_4_587","slug":"name-4-587-530","description":"Detailed synthetic description for categories record 4. Features high-performance architecture and reliability."},{"created_at":null,"id":5,"name":"name_5_847","slug":"name-5-847-700","description":"Detailed synthetic description for categories record 5. Features high-performance architecture and reliability."},{"created_at":"2024-08-13 07:11:15","id":6,"name":"name_6_900","slug":"name-6-900-689","description":"Detailed synthetic description for categories record 6. Features high-performance architecture and reliability."},{"created_at":null,"id":7,"name":"name_7_699","slug":"name-7-699-721","description":"Detailed synthetic description for categories record 7. Features high-performance architecture and reliability."},{"created_at":null,"id":8,"name":"name_8_134","slug":"name-8-134-946","description":"Detailed synthetic description for categories record 8. Features high-performance architecture and reliability."},{"created_at":null,"id":9,"name":"name_9_816","slug":"name-9-816-873","description":"Detailed synthetic description for categories record 9. Features high-performance architecture and reliability."},{"created_at":"2024-10-01 18:16:02","id":10,"name":"name_10_372","slug":"name-10-372-636","description":"Detailed synthetic description for categories record 10. Features high-performance architecture and reliability."},{"created_at":null,"id":11,"name":"name_11_717","slug":"name-11-717-795","description":"Detailed synthetic description for categories record 11. Features high-performance architecture and reliability."},{"created_at":null,"id":12,"name":"name_12_749","slug":"name-12-749-402","description":"Detailed synthetic description for categories record 12. Features high-performance architecture and reliability."},{"created_at":null,"id":13,"name":"name_13_793","slug":"name-13-793-200","description":"Detailed synthetic description for categories record 13. Features high-performance architecture and reliability."},{"created_at":null,"id":14,"name":"name_14_270","slug":"name-14-270-138","description":"Detailed synthetic description for categories record 14. Features high-performance architecture and reliability."},{"created_at":"2024-08-29 13:50:27","id":15,"name":"name_15_815","slug":"name-15-815-273","description":"Detailed synthetic description for categories record 15. Features high-performance architecture and reliability."},{"created_at":null,"id":16,"name":"name_16_401","slug":"name-16-401-803","description":"Detailed synthetic description for categories record 16. Features high-performance architecture and reliability."},{"created_at":"2023-01-30 03:40:58","id":17,"name":"name_17_349","slug":"name-17-349-326","description":"Detailed synthetic description for categories record 17. Features high-performance architecture and reliability."},{"created_at":null,"id":18,"name":"name_18_788","slug":"name-18-788-558","description":"Detailed synthetic description for categories record 18. Features high-performance architecture and reliability."},{"created_at":"2024-12-09 19:08:43","id":19,"name":"name_19_133","slug":"name-19-133-728","description":null},{"created_at":null,"id":20,"name":"name_20_814","slug":"name-20-814-354","description":"Detailed synthetic description for categories record 20. Features high-performance architecture and reliability."},{"created_at":"2022-07-19 21:06:52","id":21,"name":"name_21_197","slug":"name-21-197-688","description":"Detailed synthetic description for categories record 21. Features high-performance architecture and reliability."},{"created_at":"2024-10-19 05:37:27","id":22,"name":"name_22_415","slug":"name-22-415-411","description":"Detailed synthetic description for categories record 22. Features high-performance architecture and reliability."},{"created_at":"2022-06-22 00:19:25","id":23,"name":"name_23_645","slug":"name-23-645-384","description":"Detailed synthetic description for categories record 23. Features high-performance architecture and reliability."},{"created_at":"2022-04-29 04:52:01","id":24,"name":"name_24_564","slug":"name-24-564-472","description":"Detailed synthetic description for categories record 24. Features high-performance architecture and reliability."},{"created_at":"2023-01-07 20:09:54","id":25,"name":"name_25_329","slug":"name-25-329-585","description":"Detailed synthetic description for categories record 25. Features high-performance architecture and reliability."}]},"products":{"columns":["id","category_id","sku","name","slug","description","price","discount_percentage","stock_quantity","is_active","created_at","updated_at"],"rows":[{"created_at":null,"updated_at":"2023-06-24 22:39:19","id":1,"category_id":1,"sku":"MOD-9361","name":"Ergonomic Router","slug":"ergonomic-router-664","description":null,"price":229.44,"discount_percentage":27.21,"stock_quantity":2,"is_active":true},{"created_at":null,"updated_at":"2022-06-24 17:37:02","id":2,"category_id":16,"sku":"SKU-5868","name":"Wireless Mechanical Switch","slug":"wireless-mechanical-switch-387","description":"Detailed synthetic description for products record 2. Features high-performance architecture and reliability.","price":2.32,"discount_percentage":14.03,"stock_quantity":8,"is_active":true},{"created_at":null,"updated_at":"2024-03-17 00:33:56","id":3,"category_id":18,"sku":"MOD-9083","name":"Precision Webcam","slug":"precision-webcam-137","description":"Detailed synthetic description for products record 3. Features high-performance architecture and reliability.","price":131.25,"discount_percentage":20.17,"stock_quantity":5,"is_active":true},{"created_at":"2022-06-07 06:50:35","updated_at":"2022-06-12 11:52:50","id":4,"category_id":1,"sku":"PROD-6722","name":"Pro Sensor Hub","slug":"pro-sensor-hub-374","description":"Detailed synthetic description for products record 4. Features high-performance architecture and reliability.","price":81.07,"discount_percentage":7.85,"stock_quantity":8,"is_active":false},{"created_at":null,"updated_at":"2022-02-27 20:18:18","id":5,"category_id":15,"sku":"SKU-9136","name":"Elite Keyboard","slug":"elite-keyboard-865","description":"Detailed synthetic description for products record 5. Features high-performance architecture and reliability.","price":45.25,"discount_percentage":0.04,"stock_quantity":5,"is_active":false},{"created_at":null,"updated_at":"2022-09-08 07:13:23","id":6,"category_id":4,"sku":"SKU-3739","name":"Rugged Webcam","slug":"rugged-webcam-515","description":"Detailed synthetic description for products record 6. Features high-performance architecture and reliability.","price":4.02,"discount_percentage":8.79,"stock_quantity":1,"is_active":true},{"created_at":null,"updated_at":"2023-07-14 20:32:26","id":7,"category_id":2,"sku":"SKU-7747","name":"Adaptive Mechanical Switch","slug":"adaptive-mechanical-switch-485","description":"Detailed synthetic description for products record 7. Features high-performance architecture and reliability.","price":126.64,"discount_percentage":11.36,"stock_quantity":2,"is_active":true},{"created_at":null,"updated_at":"2022-03-14 22:09:57","id":8,"category_id":2,"sku":"MOD-6583","name":"Adaptive Smartwatch","slug":"adaptive-smartwatch-752","description":"Detailed synthetic description for products record 8. Features high-performance architecture and reliability.","price":60.59,"discount_percentage":23.03,"stock_quantity":2,"is_active":true},{"created_at":"2024-02-19 18:09:49","updated_at":"2024-02-22 13:24:31","id":9,"category_id":1,"sku":"ITM-3522","name":"Ergonomic Storage Array","slug":"ergonomic-storage-array-217","description":"Detailed synthetic description for products record 9. Features high-performance architecture and reliability.","price":112.31,"discount_percentage":20.04,"stock_quantity":1,"is_active":false},{"created_at":null,"updated_at":"2024-03-30 09:43:00","id":10,"category_id":12,"sku":"PROD-2095","name":"Precision Mechanical Switch","slug":"precision-mechanical-switch-369","description":"Detailed synthetic description for products record 10. Features high-performance architecture and reliability.","price":80.72,"discount_percentage":4.52,"stock_quantity":1,"is_active":true},{"created_at":null,"updated_at":"2024-12-05 20:21:47","id":11,"category_id":1,"sku":"PROD-2697","name":"Rugged Keyboard","slug":"rugged-keyboard-306","description":"Detailed synthetic description for products record 11. Features high-performance architecture and reliability.","price":33.25,"discount_percentage":16.94,"stock_quantity":7,"is_active":true},{"created_at":"2023-07-27 07:44:57","updated_at":"2023-08-18 10:02:35","id":12,"category_id":2,"sku":"ITM-2109","name":"Turbo Mechanical Switch","slug":"turbo-mechanical-switch-350","description":"Detailed synthetic description for products record 12. Features high-performance architecture and reliability.","price":93.93,"discount_percentage":28.22,"stock_quantity":3,"is_active":true},{"created_at":"2024-03-30 09:15:12","updated_at":"2024-03-30 20:51:15","id":13,"category_id":3,"sku":"MOD-3351","name":"Smart Mechanical Switch","slug":"smart-mechanical-switch-257","description":"Detailed synthetic description for products record 13. Features high-performance architecture and reliability.","price":141.43,"discount_percentage":11.56,"stock_quantity":1,"is_active":true},{"created_at":"2023-11-24 05:43:31","updated_at":"2023-12-04 08:53:50","id":14,"category_id":4,"sku":"MOD-5747","name":"Compact Keyboard","slug":"compact-keyboard-923","description":"Detailed synthetic description for products record 14. Features high-performance architecture and reliability.","price":148.42,"discount_percentage":26.96,"stock_quantity":7,"is_active":false},{"created_at":null,"updated_at":"2022-10-06 19:04:14","id":15,"category_id":1,"sku":"ITM-5094","name":"Quantum Trackpad","slug":"quantum-trackpad-848","description":"Detailed synthetic description for products record 15. Features high-performance architecture and reliability.","price":1,"discount_percentage":5.67,"stock_quantity":8,"is_active":true},{"created_at":null,"updated_at":"2023-02-27 04:27:17","id":16,"category_id":1,"sku":"MOD-4751","name":"Eco-Friendly Trackpad","slug":"eco-friendly-trackpad-975","description":null,"price":50.67,"discount_percentage":26.83,"stock_quantity":8,"is_active":true},{"created_at":"2024-01-12 16:28:41","updated_at":null,"id":17,"category_id":2,"sku":"MOD-8863","name":"Eco-Friendly Thermal Pad","slug":"eco-friendly-thermal-pad-610","description":"Detailed synthetic description for products record 17. Features high-performance architecture and reliability.","price":176.82,"discount_percentage":27.86,"stock_quantity":4,"is_active":null},{"created_at":"2024-08-09 02:27:16","updated_at":"2024-08-20 07:16:23","id":18,"category_id":4,"sku":"SYS-7078","name":"Elite Storage Array","slug":"elite-storage-array-268","description":"Detailed synthetic description for products record 18. Features high-performance architecture and reliability.","price":48.04,"discount_percentage":23.1,"stock_quantity":4,"is_active":false},{"created_at":null,"updated_at":"2023-07-05 21:22:42","id":19,"category_id":12,"sku":"SYS-2324","name":"Compact Display Monitor","slug":"compact-display-monitor-960","description":"Detailed synthetic description for products record 19. Features high-performance architecture and reliability.","price":126.55,"discount_percentage":1.81,"stock_quantity":10,"is_active":true},{"created_at":"2024-01-11 16:08:03","updated_at":"2024-01-24 13:24:51","id":20,"category_id":10,"sku":"ITM-4177","name":"Rugged Trackpad","slug":"rugged-trackpad-145","description":"Detailed synthetic description for products record 20. Features high-performance architecture and reliability.","price":50.8,"discount_percentage":11.05,"stock_quantity":2,"is_active":false},{"created_at":null,"updated_at":"2024-07-26 15:22:38","id":21,"category_id":1,"sku":"PROD-6669","name":"Turbo Docking Station","slug":"turbo-docking-station-670","description":"Detailed synthetic description for products record 21. Features high-performance architecture and reliability.","price":73.18,"discount_percentage":25.04,"stock_quantity":6,"is_active":false},{"created_at":null,"updated_at":"2024-01-09 11:33:45","id":22,"category_id":1,"sku":"SYS-5949","name":"Turbo Display Monitor","slug":"turbo-display-monitor-762","description":"Detailed synthetic description for products record 22. Features high-performance architecture and reliability.","price":156.48,"discount_percentage":26.16,"stock_quantity":4,"is_active":true},{"created_at":"2024-03-25 10:41:17","updated_at":"2024-04-14 12:44:13","id":23,"category_id":9,"sku":"MOD-9463","name":"Ultra Docking Station","slug":"ultra-docking-station-591","description":"Detailed synthetic description for products record 23. Features high-performance architecture and reliability.","price":110,"discount_percentage":21.63,"stock_quantity":3,"is_active":true},{"created_at":"2024-02-23 14:49:23","updated_at":"2024-02-29 00:47:24","id":24,"category_id":1,"sku":"MOD-9139","name":"Rugged Storage Array","slug":"rugged-storage-array-423","description":null,"price":127.54,"discount_percentage":12.25,"stock_quantity":9,"is_active":true},{"created_at":null,"updated_at":"2025-01-02 19:16:24","id":25,"category_id":3,"sku":"SYS-4115","name":"Ultra Mechanical Switch","slug":"ultra-mechanical-switch-967","description":"Detailed synthetic description for products record 25. Features high-performance architecture and reliability.","price":160.04,"discount_percentage":14.33,"stock_quantity":5,"is_active":true}]},"users":{"columns":["id","email","password_hash","first_name","last_name","role","is_active","created_at","updated_at"],"rows":[{"created_at":null,"updated_at":"2024-06-03 18:50:55","id":1,"email":"camila.roberts8259@example.net","password_hash":"$2a$12$qQN6z/ZrXkAxhb6wyZRrTBKj77Rf6F4nxJBogmin.p.l729T8XLCm","first_name":"Emily","last_name":"Miller","role":"editor","is_active":false},{"created_at":"2022-07-18 11:43:49","updated_at":"2022-07-30 19:38:51","id":2,"email":"lincoln.williams9541@example.org","password_hash":"$2a$12$It2fBnQf4V5sf51F/53TahFLoP0Ii5WB1yUuIgXPHvp2GOSSrYuIb","first_name":"Abigail","last_name":"Campbell","role":"editor","is_active":false},{"created_at":null,"updated_at":"2022-08-26 12:40:10","id":3,"email":"victoria.williams5332@example.org","password_hash":"$2a$12$wCy2gmv5LiIIZK/sX3QwdNCZf8ikyFbeo6xqAYaqX2Hyzf4NusfV8","first_name":"Layla","last_name":"Adams","role":"developer","is_active":false},{"created_at":"2024-07-27 18:25:23","updated_at":"2024-08-11 05:34:55","id":4,"email":"gabriel.taylor2013@example.com","password_hash":"$2a$12$u/Pr95L2vU8HF.bi93.0mEdXxKvwvhzxeNeSX6VcsB0ZZzlBVehjX","first_name":"Joseph","last_name":"Cruz","role":"admin","is_active":false},{"created_at":"2023-07-19 07:51:06","updated_at":"2023-08-09 23:36:44","id":5,"email":"anthony.cruz1856@example.net","password_hash":"$2a$12$25IfElwAGMaIqyjJFm8PzdsWVcK/K0CujI.k/7oiMJYGxA4OCDoCd","first_name":"James","last_name":"Morris","role":"developer","is_active":false},{"created_at":null,"updated_at":"2024-06-18 02:24:38","id":6,"email":"john.jones5544@example.net","password_hash":"$2a$12$VUtwbICd7yvScc/TVHn5oOhESzFDj2FGDu63qJRD0glxUvqD/CNLR","first_name":"Lincoln","last_name":"Hernandez","role":"viewer","is_active":true},{"created_at":null,"updated_at":"2022-01-30 21:33:22","id":7,"email":"benjamin.diaz8510@example.com","password_hash":"$2a$12$dgyl5eABhQH15wuqEmiNVN5WIYii1kiOPAXFs5ZacZPXZpt8O5UuK","first_name":"Oliver","last_name":"Williams","role":"developer","is_active":true},{"created_at":null,"updated_at":"2024-08-21 08:30:28","id":8,"email":"olivia.cruz5277@example.org","password_hash":"$2a$12$Jx7PL3Al3HbvIiNprjiu15qjLmlQ5ORgSpiEvuu98jYoESIEjHepX","first_name":"David","last_name":"Evans","role":"billing_manager","is_active":true},{"created_at":"2024-12-19 14:33:29","updated_at":"2024-12-27 22:16:44","id":9,"email":"emily.garcia2250@example.org","password_hash":"$2a$12$Hmpv5Q/sB0tCczGDYtHBjJLqHTLgwWMIUU/OZTh0tPDr058lDEHRT","first_name":"Mateo","last_name":"Ramirez","role":"editor","is_active":true},{"created_at":"2023-07-30 17:32:23","updated_at":"2023-08-04 00:23:52","id":10,"email":"anthony.hernandez5435@example.net","password_hash":"$2a$12$5m5Q6jZiOu41loWosGirupPWJAZagMvUw.Awn8DL7M0beYacGPk8h","first_name":"Owen","last_name":"Robinson","role":"support_agent","is_active":true},{"created_at":"2023-10-22 20:16:08","updated_at":"2023-11-07 12:23:09","id":11,"email":"lincoln.lee5062@example.net","password_hash":"$2a$12$h0HVcduZwMwVPUaNbLI9w9NE9f2.KIyJuxD9xkqM30DlZHtVqii6k","first_name":"Mateo","last_name":"Parker","role":"user","is_active":true},{"created_at":null,"updated_at":"2023-02-03 08:17:09","id":12,"email":"ella.robinson466@example.org","password_hash":"$2a$12$66gmPbYDlTU4nvhJRcLjoZkWsAL4CdMYud9WmiZh47dj4KQ.OjOU4","first_name":"Mia","last_name":"Murphy","role":"user","is_active":true},{"created_at":"2022-10-04 18:35:02","updated_at":"2022-10-13 18:07:15","id":13,"email":"harper.thompson7246@example.net","password_hash":"$2a$12$VsgC7O.mI1gf82890I./4TMCAa5FK.eXaNRZo2ydtOQZmdKrse/eE","first_name":"Ella","last_name":"Martinez","role":"moderator","is_active":true},{"created_at":null,"updated_at":"2022-08-09 02:06:27","id":14,"email":"avery.thomas8130@example.org","password_hash":"$2a$12$yBgkxTlG87h.oGFlhiz6d8KB4Q2CnT0N6P.BT5UPPeGCeHu78EL05","first_name":"Joseph","last_name":"Martinez","role":"editor","is_active":false},{"created_at":"2024-02-04 09:36:48","updated_at":"2024-02-09 02:25:45","id":15,"email":"benjamin.taylor1038@example.org","password_hash":"$2a$12$RYnP3e0exyqv3l6vI8V83gpn5EMV/vdgMrN1/dXjFVmT/7LXbjGQM","first_name":"Luke","last_name":"White","role":"admin","is_active":false},{"created_at":null,"updated_at":"2024-09-11 02:53:15","id":16,"email":"mia.jones5154@example.com","password_hash":"$2a$12$6i8o9UYKNdG2bgzzJYdQ9RQCfynxctVYV5.F1GEHNR84pBzVFI3LE","first_name":"Luna","last_name":"Martinez","role":"billing_manager","is_active":true},{"created_at":"2023-09-26 09:59:32","updated_at":null,"id":17,"email":"sophia.hall4304@example.org","password_hash":"$2a$12$nGdsc9ge5Mv2g7ks3Q9DjkGY6A3mr8xSqo/QJCj4CBKd1eai3SPc3","first_name":"Samuel","last_name":"Torres","role":"developer","is_active":true},{"created_at":null,"updated_at":"2024-07-20 19:39:40","id":18,"email":"penelope.diaz7145@example.net","password_hash":"$2a$12$WHCqDEOhd32Ql6CvECezUREqsclF.JXtHIVJaC8nm8QMcyzvZ/9GD","first_name":"Camila","last_name":"Miller","role":"moderator","is_active":false},{"created_at":null,"updated_at":"2024-10-19 10:37:34","id":19,"email":"elijah.smith8670@example.net","password_hash":"$2a$12$nXeAha4WdcI/CnUoi61dDk0fXnJMuvOE15e4fVXmPOt36zmaP1cSr","first_name":"Luna","last_name":"Gonzalez","role":"billing_manager","is_active":true},{"created_at":null,"updated_at":"2025-01-01 13:53:43","id":20,"email":"benjamin.jones1883@example.net","password_hash":"$2a$12$PuBxgFNYMekLYSbmovc3y/pQ5MHma.cWk0y2PJfddj06ODU5KG6Do","first_name":"David","last_name":"Campbell","role":"developer","is_active":true},{"created_at":null,"updated_at":null,"id":21,"email":"william.williams3598@example.org","password_hash":"$2a$12$zKtCMhg7n0oTvrITkq1CE1VXn0wAXwY28olM0a1JaG89Be0OAwNWt","first_name":"James","last_name":"Green","role":null,"is_active":false},{"created_at":"2024-05-16 06:00:42","updated_at":"2024-05-27 18:04:51","id":22,"email":"ethan.allen9130@example.com","password_hash":"$2a$12$yMdq3Sadpe7d.X0rkNz./Gl.PiztX.qUO145CXMVARj.75Updo8W.","first_name":"John","last_name":"Green","role":"billing_manager","is_active":false},{"created_at":null,"updated_at":"2022-09-27 05:18:37","id":23,"email":"oliver.brown5157@example.com","password_hash":"$2a$12$DD36.F3KxxBAFQKk54CeMewkQ/O1PePVxwk9TY3Bqst2yG63jjUmH","first_name":"Lincoln","last_name":"Torres","role":"admin","is_active":true},{"created_at":null,"updated_at":"2023-06-28 07:00:21","id":24,"email":"emily.allen9021@example.com","password_hash":"$2a$12$lOiLf6oDCjo2XFw4zAEZ.aGQbZMfpHZlFqCIvwndcv5BMlUDzPri5","first_name":"Elijah","last_name":"Diaz","role":"developer","is_active":null},{"created_at":null,"updated_at":"2024-07-01 02:33:10","id":25,"email":"elijah.young7435@example.net","password_hash":"$2a$12$TmFueD6bAWfMa1R84sQprYTUSFQZ3vYR7csw7Qp4MHjBm4xeq7A4H","first_name":"Mia","last_name":"Thomas","role":"user","is_active":true}]},"orders":{"columns":["id","user_id","order_status","total_amount","shipping_address","created_at","updated_at","shipped_at","delivered_at"],"rows":[{"created_at":"2024-03-16 23:36:21","shipped_at":"2024-03-21 07:24:10","delivered_at":"2024-03-27 20:09:58","updated_at":"2024-04-08 23:52:54","id":1,"user_id":7,"order_status":"delivered","total_amount":288.58,"shipping_address":"shipping_1_504"},{"created_at":"2022-01-10 03:50:56","shipped_at":"2022-01-14 20:25:00","delivered_at":"2022-01-19 06:30:37","updated_at":"2022-01-31 00:18:47","id":2,"user_id":1,"order_status":null,"total_amount":228.32,"shipping_address":"shipping_2_533"},{"created_at":null,"shipped_at":null,"delivered_at":"2023-11-25 18:47:12","updated_at":"2023-12-19 09:48:50","id":3,"user_id":2,"order_status":"cancelled","total_amount":229.98,"shipping_address":"shipping_3_227"},{"created_at":"2022-01-10 06:33:15","shipped_at":null,"delivered_at":"2022-01-13 05:56:48","updated_at":"2022-02-05 11:47:43","id":4,"user_id":17,"order_status":"processing","total_amount":1,"shipping_address":"shipping_4_877"},{"created_at":null,"shipped_at":"2022-04-29 12:39:03","delivered_at":"2022-04-30 16:02:30","updated_at":"2022-05-03 02:44:37","id":5,"user_id":18,"order_status":"processing","total_amount":210.36,"shipping_address":"shipping_5_447"},{"created_at":"2024-04-25 15:34:30","shipped_at":null,"delivered_at":"2024-05-04 08:43:25","updated_at":"2024-06-02 12:05:34","id":6,"user_id":4,"order_status":"cancelled","total_amount":60.94,"shipping_address":"shipping_6_402"},{"created_at":null,"shipped_at":"2022-10-29 18:54:09","delivered_at":null,"updated_at":"2022-10-30 00:49:27","id":7,"user_id":5,"order_status":"cancelled","total_amount":62.93,"shipping_address":"shipping_7_995"},{"created_at":"2024-02-19 06:13:36","shipped_at":"2024-02-23 00:25:00","delivered_at":"2024-02-24 22:06:47","updated_at":"2024-03-14 08:22:33","id":8,"user_id":1,"order_status":"pending","total_amount":227.91,"shipping_address":"shipping_8_656"},{"created_at":null,"shipped_at":"2024-04-07 22:41:19","delivered_at":"2024-04-09 16:04:44","updated_at":"2024-04-24 18:55:50","id":9,"user_id":5,"order_status":"shipped","total_amount":357.74,"shipping_address":"shipping_9_490"},{"created_at":"2023-06-19 05:29:17","shipped_at":"2023-06-23 01:49:34","delivered_at":"2023-06-24 03:17:01","updated_at":"2023-07-04 16:18:44","id":10,"user_id":13,"order_status":"shipped","total_amount":205.08,"shipping_address":"shipping_10_297"},{"created_at":null,"shipped_at":"2022-06-12 00:26:17","delivered_at":"2022-06-21 00:18:16","updated_at":"2022-07-18 19:55:04","id":11,"user_id":22,"order_status":null,"total_amount":49.82,"shipping_address":"shipping_11_243"},{"created_at":"2022-05-03 03:37:33","shipped_at":"2022-05-07 06:58:06","delivered_at":"2022-05-14 02:02:54","updated_at":"2022-05-28 08:38:14","id":12,"user_id":7,"order_status":"delivered","total_amount":298.28,"shipping_address":"shipping_12_310"},{"created_at":null,"shipped_at":"2022-11-19 07:52:29","delivered_at":"2022-11-27 08:42:07","updated_at":"2022-11-28 08:42:42","id":13,"user_id":12,"order_status":"shipped","total_amount":165.83,"shipping_address":"shipping_13_378"},{"created_at":null,"shipped_at":"2022-01-24 04:40:13","delivered_at":"2022-01-30 10:14:03","updated_at":"2022-02-18 23:46:58","id":14,"user_id":10,"order_status":"processing","total_amount":382.47,"shipping_address":"shipping_14_911"},{"created_at":"2023-10-31 21:25:00","shipped_at":"2023-11-04 20:00:09","delivered_at":"2023-11-06 11:40:50","updated_at":"2023-12-05 07:20:07","id":15,"user_id":1,"order_status":"processing","total_amount":139.46,"shipping_address":"shipping_15_216"},{"created_at":null,"shipped_at":"2022-01-29 02:13:57","delivered_at":"2022-01-30 16:29:10","updated_at":"2022-02-27 04:16:36","id":16,"user_id":1,"order_status":"cancelled","total_amount":230.44,"shipping_address":"shipping_16_922"},{"created_at":null,"shipped_at":"2022-10-18 07:20:06","delivered_at":"2022-10-24 21:14:07","updated_at":"2022-10-26 07:31:59","id":17,"user_id":2,"order_status":"pending","total_amount":145.26,"shipping_address":"shipping_17_754"},{"created_at":null,"shipped_at":null,"delivered_at":"2022-04-20 10:53:58","updated_at":"2022-05-13 20:41:30","id":18,"user_id":6,"order_status":"shipped","total_amount":186.8,"shipping_address":"shipping_18_149"},{"created_at":"2023-07-10 23:51:22","shipped_at":"2023-07-12 21:32:04","delivered_at":null,"updated_at":"2023-07-25 11:24:01","id":19,"user_id":1,"order_status":"shipped","total_amount":196.66,"shipping_address":"shipping_19_474"},{"created_at":null,"shipped_at":"2024-07-07 16:21:30","delivered_at":"2024-07-13 14:08:05","updated_at":"2024-07-21 22:35:26","id":20,"user_id":3,"order_status":"processing","total_amount":183.27,"shipping_address":"shipping_20_900"},{"created_at":"2024-03-12 03:26:29","shipped_at":null,"delivered_at":"2024-03-20 11:38:35","updated_at":"2024-03-24 01:47:07","id":21,"user_id":8,"order_status":"shipped","total_amount":201.38,"shipping_address":"shipping_21_363"},{"created_at":null,"shipped_at":"2023-05-17 04:38:23","delivered_at":"2023-05-18 07:01:37","updated_at":"2023-06-06 14:03:47","id":22,"user_id":3,"order_status":"delivered","total_amount":179.41,"shipping_address":"shipping_22_733"},{"created_at":null,"shipped_at":"2022-03-09 23:40:03","delivered_at":"2022-03-13 17:48:17","updated_at":"2022-04-03 12:58:10","id":23,"user_id":17,"order_status":"shipped","total_amount":153.56,"shipping_address":"shipping_23_611"},{"created_at":"2024-07-24 07:58:24","shipped_at":"2024-07-25 04:09:49","delivered_at":"2024-08-03 08:38:51","updated_at":"2024-08-31 13:39:45","id":24,"user_id":8,"order_status":"shipped","total_amount":123.25,"shipping_address":"shipping_24_278"},{"created_at":null,"shipped_at":"2022-02-22 18:16:32","delivered_at":"2022-02-24 02:19:35","updated_at":"2022-03-11 03:16:31","id":25,"user_id":18,"order_status":"delivered","total_amount":39.84,"shipping_address":"shipping_25_901"}]},"order_items":{"columns":["id","order_id","product_id","quantity","unit_price","subtotal","created_at"],"rows":[{"created_at":"2022-09-09 16:29:12","id":1,"order_id":25,"product_id":2,"quantity":5,"unit_price":204.99,"subtotal":105.24},{"created_at":"2022-11-27 19:35:32","id":2,"order_id":8,"product_id":1,"quantity":3,"unit_price":135.92,"subtotal":78.07},{"created_at":null,"id":3,"order_id":6,"product_id":1,"quantity":6,"unit_price":182.78,"subtotal":86.55},{"created_at":"2024-09-28 01:04:11","id":4,"order_id":11,"product_id":6,"quantity":10,"unit_price":109.85,"subtotal":94.57},{"created_at":"2022-07-30 05:30:01","id":5,"order_id":6,"product_id":1,"quantity":3,"unit_price":1,"subtotal":121.69},{"created_at":null,"id":6,"order_id":8,"product_id":11,"quantity":2,"unit_price":95.86,"subtotal":165.79},{"created_at":"2024-08-01 03:15:13","id":7,"order_id":13,"product_id":19,"quantity":2,"unit_price":136.74,"subtotal":102.03},{"created_at":"2023-12-05 14:14:10","id":8,"order_id":10,"product_id":1,"quantity":6,"unit_price":52.01,"subtotal":15.6},{"created_at":"2022-02-01 21:35:16","id":9,"order_id":25,"product_id":2,"quantity":8,"unit_price":105.28,"subtotal":37.94},{"created_at":"2023-11-19 21:41:29","id":10,"order_id":12,"product_id":14,"quantity":10,"unit_price":6.38,"subtotal":222.47},{"created_at":null,"id":11,"order_id":5,"product_id":11,"quantity":6,"unit_price":228.14,"subtotal":1},{"created_at":null,"id":12,"order_id":9,"product_id":1,"quantity":2,"unit_price":1,"subtotal":16.64},{"created_at":null,"id":13,"order_id":6,"product_id":5,"quantity":10,"unit_price":65.19,"subtotal":84.76},{"created_at":"2023-06-04 20:55:12","id":14,"order_id":20,"product_id":4,"quantity":10,"unit_price":193.79,"subtotal":93.43},{"created_at":null,"id":15,"order_id":12,"product_id":13,"quantity":2,"unit_price":202.56,"subtotal":114.73},{"created_at":"2022-06-18 11:39:04","id":16,"order_id":14,"product_id":15,"quantity":10,"unit_price":135.86,"subtotal":181.54},{"created_at":"2024-10-01 00:13:30","id":17,"order_id":3,"product_id":17,"quantity":4,"unit_price":44.2,"subtotal":65.98},{"created_at":"2022-02-17 00:56:18","id":18,"order_id":24,"product_id":3,"quantity":7,"unit_price":50.31,"subtotal":165.2},{"created_at":null,"id":19,"order_id":17,"product_id":1,"quantity":2,"unit_price":158.57,"subtotal":199.6},{"created_at":"2022-10-21 03:01:33","id":20,"order_id":22,"product_id":1,"quantity":5,"unit_price":174.33,"subtotal":78.67},{"created_at":null,"id":21,"order_id":4,"product_id":2,"quantity":10,"unit_price":68.07,"subtotal":112.79},{"created_at":null,"id":22,"order_id":15,"product_id":1,"quantity":8,"unit_price":334.37,"subtotal":79.98},{"created_at":"2023-12-21 04:34:32","id":23,"order_id":10,"product_id":1,"quantity":1,"unit_price":42.63,"subtotal":96.15},{"created_at":null,"id":24,"order_id":17,"product_id":1,"quantity":5,"unit_price":274.38,"subtotal":97.16},{"created_at":null,"id":25,"order_id":22,"product_id":4,"quantity":2,"unit_price":70.56,"subtotal":151}]},"payments":{"columns":["id","order_id","payment_method","card_number","amount","status","transaction_reference","created_at","updated_at"],"rows":[{"created_at":"2024-11-10 22:51:29","updated_at":"2024-11-24 15:04:45","id":1,"order_id":13,"payment_method":"payment__1_665","card_number":"5100001934793403","amount":141.47,"status":"settled","transaction_reference":"transact_1_465"},{"created_at":null,"updated_at":"2022-02-22 22:52:48","id":2,"order_id":1,"payment_method":"payment__2_684","card_number":"370000401464302","amount":1,"status":"failed","transaction_reference":"transact_2_326"},{"created_at":"2022-05-26 03:31:48","updated_at":"2022-06-20 15:13:27","id":3,"order_id":7,"payment_method":"payment__3_154","card_number":"4000005325833862","amount":102.31,"status":"settled","transaction_reference":"transact_3_465"},{"created_at":"2023-08-24 07:20:06","updated_at":"2023-09-13 02:46:58","id":4,"order_id":17,"payment_method":"payment__4_997","card_number":"4000004032963492","amount":270.51,"status":"captured","transaction_reference":"transact_4_216"},{"created_at":"2023-01-10 10:39:31","updated_at":"2023-01-12 01:15:35","id":5,"order_id":2,"payment_method":"payment__5_747","card_number":"5100009724743801","amount":128.21,"status":"authorized","transaction_reference":"transact_5_198"},{"created_at":null,"updated_at":"2023-04-19 09:24:52","id":6,"order_id":22,"payment_method":"payment__6_610","card_number":"370000298100035","amount":100.11,"status":"failed","transaction_reference":"transact_6_821"},{"created_at":null,"updated_at":"2022-07-18 21:46:03","id":7,"order_id":4,"payment_method":"payment__7_378","card_number":"370000304111695","amount":162.01,"status":"refunded","transaction_reference":"transact_7_487"},{"created_at":"2023-04-13 17:44:38","updated_at":"2023-04-29 03:06:37","id":8,"order_id":6,"payment_method":"payment__8_367","card_number":"4000001537696668","amount":137.63,"status":"captured","transaction_reference":"transact_8_650"},{"created_at":"2023-03-12 12:14:53","updated_at":"2023-03-27 13:02:35","id":9,"order_id":25,"payment_method":"payment__9_496","card_number":"370000261580544","amount":77.52,"status":"refunded","transaction_reference":"transact_9_294"},{"created_at":"2023-09-22 08:03:58","updated_at":"2023-09-29 09:09:38","id":10,"order_id":12,"payment_method":"payment__10_347","card_number":"4000000247943915","amount":256.39,"status":"refunded","transaction_reference":"transact_10_755"},{"created_at":null,"updated_at":"2023-11-10 18:19:55","id":11,"order_id":8,"payment_method":"payment__11_376","card_number":"370000200369025","amount":145.37,"status":"refunded","transaction_reference":"transact_11_639"},{"created_at":null,"updated_at":"2024-09-21 07:15:49","id":12,"order_id":19,"payment_method":"payment__12_291","card_number":"370000134041120","amount":114.05,"status":"captured","transaction_reference":"transact_12_559"},{"created_at":"2024-03-31 06:45:47","updated_at":"2024-04-08 03:15:46","id":13,"order_id":12,"payment_method":"payment__13_371","card_number":"4000005473430099","amount":212.44,"status":"settled","transaction_reference":"transact_13_560"},{"created_at":"2024-07-23 18:33:14","updated_at":"2024-08-05 05:25:05","id":14,"order_id":24,"payment_method":"payment__14_562","card_number":"370000879761288","amount":77.22,"status":"refunded","transaction_reference":"transact_14_737"},{"created_at":null,"updated_at":"2023-02-23 18:20:17","id":15,"order_id":24,"payment_method":"payment__15_269","card_number":"4000005063350897","amount":67.54,"status":"settled","transaction_reference":"transact_15_184"},{"created_at":"2024-07-12 20:59:06","updated_at":"2024-07-22 00:27:53","id":16,"order_id":12,"payment_method":"payment__16_701","card_number":"5100002156715314","amount":160.91,"status":"authorized","transaction_reference":"transact_16_783"},{"created_at":"2024-10-19 10:28:28","updated_at":"2024-11-11 22:55:33","id":17,"order_id":5,"payment_method":null,"card_number":"5100009160263561","amount":147.43,"status":"settled","transaction_reference":"transact_17_703"},{"created_at":null,"updated_at":"2023-05-18 23:08:05","id":18,"order_id":1,"payment_method":"payment__18_749","card_number":"370000824345534","amount":156.07,"status":"failed","transaction_reference":"transact_18_968"},{"created_at":"2024-07-14 08:24:10","updated_at":"2024-07-22 21:24:10","id":19,"order_id":13,"payment_method":"payment__19_922","card_number":"370000991863665","amount":31.46,"status":"failed","transaction_reference":"transact_19_618"},{"created_at":null,"updated_at":null,"id":20,"order_id":3,"payment_method":"payment__20_798","card_number":"4000000614208231","amount":95.37,"status":"refunded","transaction_reference":"transact_20_392"},{"created_at":"2023-03-20 04:14:13","updated_at":"2023-04-09 05:28:48","id":21,"order_id":12,"payment_method":"payment__21_933","card_number":"5100008311295779","amount":121.62,"status":"failed","transaction_reference":"transact_21_649"},{"created_at":null,"updated_at":"2024-11-16 22:38:34","id":22,"order_id":3,"payment_method":"payment__22_822","card_number":"4000009906533867","amount":178.15,"status":null,"transaction_reference":"transact_22_452"},{"created_at":"2022-01-14 10:05:51","updated_at":"2022-02-13 08:25:37","id":23,"order_id":16,"payment_method":"payment__23_388","card_number":"4000005894407338","amount":1,"status":"authorized","transaction_reference":"transact_23_298"},{"created_at":"2023-01-20 20:19:51","updated_at":"2023-02-13 09:18:07","id":24,"order_id":5,"payment_method":"payment__24_253","card_number":"370000271736342","amount":161.11,"status":"refunded","transaction_reference":"transact_24_312"},{"created_at":"2022-07-07 00:22:43","updated_at":"2022-07-26 21:57:05","id":25,"order_id":20,"payment_method":"payment__25_989","card_number":"4000002313539874","amount":86.79,"status":"authorized","transaction_reference":"transact_25_917"}]},"product_reviews":{"columns":["id","product_id","user_id","rating","title","review_text","created_at"],"rows":[{"created_at":"2022-08-12 14:56:58","id":1,"product_id":3,"user_id":1,"rating":5,"title":"Operational Task #1: Sync database","review_text":"review_t_1_995"},{"created_at":null,"id":2,"product_id":19,"user_id":3,"rating":4,"title":"Operational Task #2: Sync database","review_text":"review_t_2_715"},{"created_at":null,"id":3,"product_id":1,"user_id":2,"rating":1,"title":"Operational Task #3: Configure integration","review_text":"review_t_3_141"},{"created_at":"2022-09-23 03:31:14","id":4,"product_id":7,"user_id":4,"rating":3,"title":"Operational Task #4: Optimize workflow","review_text":"review_t_4_515"},{"created_at":"2023-06-01 23:15:19","id":5,"product_id":5,"user_id":9,"rating":4,"title":"Operational Task #5: Review metrics","review_text":"review_t_5_485"},{"created_at":"2024-04-15 22:09:55","id":6,"product_id":6,"user_id":6,"rating":4,"title":"Operational Task #6: Optimize workflow","review_text":"review_t_6_686"},{"created_at":"2024-08-31 05:37:14","id":7,"product_id":6,"user_id":2,"rating":3,"title":"Operational Task #7: Review metrics","review_text":"review_t_7_469"},{"created_at":"2024-08-01 19:01:50","id":8,"product_id":7,"user_id":3,"rating":3,"title":"Operational Task #8: Review metrics","review_text":"review_t_8_107"},{"created_at":"2022-04-10 19:26:46","id":9,"product_id":4,"user_id":5,"rating":3,"title":"Operational Task #9: Configure integration","review_text":"review_t_9_851"},{"created_at":"2022-10-19 19:41:28","id":10,"product_id":6,"user_id":1,"rating":3,"title":"Operational Task #10: Review metrics","review_text":"review_t_10_139"},{"created_at":null,"id":11,"product_id":1,"user_id":21,"rating":5,"title":"Operational Task #11: Sync database","review_text":"review_t_11_661"},{"created_at":null,"id":12,"product_id":1,"user_id":1,"rating":4,"title":"Operational Task #12: Sync database","review_text":"review_t_12_464"},{"created_at":null,"id":13,"product_id":1,"user_id":1,"rating":2,"title":"Operational Task #13: Configure integration","review_text":"review_t_13_124"},{"created_at":"2024-08-06 03:54:04","id":14,"product_id":1,"user_id":2,"rating":2,"title":"Operational Task #14: Sync database","review_text":"review_t_14_493"},{"created_at":"2024-12-12 11:37:41","id":15,"product_id":3,"user_id":1,"rating":3,"title":"Operational Task #15: Optimize workflow","review_text":"review_t_15_427"},{"created_at":null,"id":16,"product_id":2,"user_id":5,"rating":4,"title":"Operational Task #16: Configure integration","review_text":"review_t_16_509"},{"created_at":null,"id":17,"product_id":1,"user_id":1,"rating":1,"title":"Operational Task #17: Sync database","review_text":"review_t_17_283"},{"created_at":"2023-11-06 16:53:34","id":18,"product_id":15,"user_id":18,"rating":2,"title":"Operational Task #18: Review metrics","review_text":"review_t_18_207"},{"created_at":null,"id":19,"product_id":5,"user_id":1,"rating":5,"title":"Operational Task #19: Review metrics","review_text":"review_t_19_675"},{"created_at":"2023-06-09 20:17:17","id":20,"product_id":11,"user_id":1,"rating":5,"title":"Operational Task #20: Optimize workflow","review_text":"review_t_20_940"},{"created_at":"2024-03-29 11:59:38","id":21,"product_id":1,"user_id":7,"rating":4,"title":"Operational Task #21: Configure integration","review_text":"review_t_21_895"},{"created_at":"2022-02-20 20:45:47","id":22,"product_id":1,"user_id":3,"rating":1,"title":"Operational Task #22: Sync database","review_text":"review_t_22_196"},{"created_at":null,"id":23,"product_id":1,"user_id":2,"rating":5,"title":"Operational Task #23: Configure integration","review_text":"review_t_23_554"},{"created_at":null,"id":24,"product_id":1,"user_id":1,"rating":4,"title":"Operational Task #24: Configure integration","review_text":"review_t_24_192"},{"created_at":"2024-08-15 20:44:27","id":25,"product_id":1,"user_id":2,"rating":2,"title":"Operational Task #25: Sync database","review_text":"review_t_25_990"}]},"user_profiles":{"columns":["id","user_id","phone_number","street_address","city","state","postal_code","country","avatar_url","created_at","updated_at"],"rows":[{"created_at":"2023-04-28 07:07:39","updated_at":"2023-05-23 18:36:48","id":1,"user_id":1,"phone_number":"+1-313-555-084","street_address":"5871 Meadowbrook Path","city":"Portland","state":"TX","postal_code":"10115","country":"USA","avatar_url":"avatar_u_1_761"},{"created_at":null,"updated_at":"2024-06-08 11:06:16","id":2,"user_id":2,"phone_number":"+1-830-555-062","street_address":null,"city":"Toronto","state":"WA","postal_code":"02108","country":"USA","avatar_url":"avatar_u_2_905"},{"created_at":"2023-11-25 12:26:58","updated_at":"2023-11-26 02:16:43","id":3,"user_id":1,"phone_number":"+1-548-555-027","street_address":null,"city":"San Jose","state":"IL","postal_code":"33101","country":"USA","avatar_url":"avatar_u_3_189"},{"created_at":null,"updated_at":"2023-02-11 07:23:49","id":4,"user_id":1,"phone_number":"+1-911-555-091","street_address":null,"city":"New York","state":"WA","postal_code":"10115","country":"USA","avatar_url":"avatar_u_4_682"},{"created_at":null,"updated_at":"2022-01-31 17:44:55","id":5,"user_id":5,"phone_number":"+1-484-555-005","street_address":"5999 Highland Way","city":"Chicago","state":"CA","postal_code":"M5H 2N2","country":"USA","avatar_url":"avatar_u_5_888"},{"created_at":null,"updated_at":"2024-01-27 07:10:19","id":6,"user_id":19,"phone_number":"+1-707-555-095","street_address":"6721 Park Circle","city":"Boston","state":"WA","postal_code":"60601","country":"USA","avatar_url":"avatar_u_6_840"},{"created_at":"2024-09-13 08:54:29","updated_at":null,"id":7,"user_id":10,"phone_number":"+1-286-555-012","street_address":"5596 Cedar Boulevard","city":"Austin","state":"CO","postal_code":"97201","country":"USA","avatar_url":"avatar_u_7_283"},{"created_at":null,"updated_at":"2023-02-09 06:51:13","id":8,"user_id":1,"phone_number":"+1-833-555-014","street_address":"1551 Pine Road","city":"Portland","state":"CO","postal_code":"M5H 2N2","country":"USA","avatar_url":"avatar_u_8_589"},{"created_at":"2023-02-16 07:50:22","updated_at":"2023-03-16 14:24:55","id":9,"user_id":2,"phone_number":"+1-680-555-037","street_address":"458 Riverfront Terrace","city":"Boston","state":"NY","postal_code":"V6B 1A1","country":"DEU","avatar_url":"avatar_u_9_858"},{"created_at":"2023-03-29 03:54:52","updated_at":"2023-04-27 22:28:14","id":10,"user_id":1,"phone_number":"+1-734-555-018","street_address":"3259 Broadway","city":"San Jose","state":"IL","postal_code":"78701","country":"USA","avatar_url":"avatar_u_10_765"},{"created_at":"2024-07-16 19:35:50","updated_at":"2024-08-04 06:08:23","id":11,"user_id":4,"phone_number":"+1-785-555-062","street_address":"6131 Maple Avenue","city":null,"state":"GA","postal_code":"10115","country":null,"avatar_url":"avatar_u_11_681"},{"created_at":null,"updated_at":"2025-01-06 21:29:08","id":12,"user_id":21,"phone_number":"+1-273-555-073","street_address":"6027 Meadowbrook Path","city":"Austin","state":"CO","postal_code":"33101","country":"USA","avatar_url":"avatar_u_12_712"},{"created_at":"2024-01-09 16:52:18","updated_at":"2024-01-29 17:07:05","id":13,"user_id":1,"phone_number":"+1-237-555-039","street_address":"865 Pine Road","city":"Toronto","state":"BC","postal_code":"80202","country":"USA","avatar_url":"avatar_u_13_937"},{"created_at":null,"updated_at":"2022-08-29 05:39:27","id":14,"user_id":1,"phone_number":"+1-556-555-059","street_address":"2167 Market Street","city":"Miami","state":"FL","postal_code":"78701","country":"USA","avatar_url":"avatar_u_14_980"},{"created_at":"2023-04-02 15:07:02","updated_at":"2023-04-28 01:37:19","id":15,"user_id":18,"phone_number":"+1-782-555-034","street_address":"5044 Meadowbrook Path","city":null,"state":"BE","postal_code":"30303","country":"USA","avatar_url":"avatar_u_15_545"},{"created_at":"2022-12-13 08:11:52","updated_at":"2022-12-25 09:59:16","id":16,"user_id":7,"phone_number":"+1-808-555-064","street_address":"9841 Highland Way","city":"New York","state":"FL","postal_code":"97201","country":"DEU","avatar_url":"avatar_u_16_964"},{"created_at":"2024-06-29 06:36:56","updated_at":"2024-07-25 13:18:47","id":17,"user_id":1,"phone_number":"+1-691-555-035","street_address":"7626 Meadowbrook Path","city":"Springfield","state":"NY","postal_code":"V6B 1A1","country":"CAN","avatar_url":"avatar_u_17_710"},{"created_at":null,"updated_at":"2023-02-23 17:28:29","id":18,"user_id":9,"phone_number":"+1-329-555-059","street_address":"4884 Pine Road","city":"San Jose","state":"TX","postal_code":"62701","country":"USA","avatar_url":"avatar_u_18_865"},{"created_at":null,"updated_at":"2024-03-05 00:01:17","id":19,"user_id":1,"phone_number":"+1-228-555-020","street_address":"3254 Meadowbrook Path","city":"Seattle","state":"WA","postal_code":"10115","country":"USA","avatar_url":"avatar_u_19_173"},{"created_at":"2024-03-21 08:50:08","updated_at":"2024-04-18 22:44:59","id":20,"user_id":5,"phone_number":"+1-283-555-072","street_address":"1620 Meadowbrook Path","city":"Denver","state":"BC","postal_code":"33101","country":"USA","avatar_url":"avatar_u_20_162"},{"created_at":"2023-06-16 02:52:15","updated_at":"2023-07-05 11:44:12","id":21,"user_id":1,"phone_number":"+1-574-555-059","street_address":"2031 Oak Street","city":"New York","state":null,"postal_code":"78701","country":"USA","avatar_url":"avatar_u_21_313"},{"created_at":null,"updated_at":"2023-04-03 18:05:59","id":22,"user_id":24,"phone_number":null,"street_address":"7080 Cedar Boulevard","city":"Austin","state":"CA","postal_code":"80202","country":"USA","avatar_url":"avatar_u_22_538"},{"created_at":null,"updated_at":"2024-02-29 22:16:13","id":23,"user_id":2,"phone_number":"+1-899-555-032","street_address":null,"city":"San Jose","state":"OR","postal_code":"78701","country":"USA","avatar_url":"avatar_u_23_890"},{"created_at":"2022-01-26 18:07:26","updated_at":"2022-02-25 08:04:15","id":24,"user_id":8,"phone_number":"+1-661-555-051","street_address":"9321 Meadowbrook Path","city":"Vancouver","state":"IL","postal_code":"98101","country":"USA","avatar_url":"avatar_u_24_550"},{"created_at":null,"updated_at":"2024-08-15 07:13:54","id":25,"user_id":2,"phone_number":"+1-892-555-058","street_address":"9320 Broadway","city":"Seattle","state":"ON","postal_code":"30303","country":null,"avatar_url":"avatar_u_25_641"}]}};
+
+    function switchTab(tabId) {
+      ['erd', 'data', 'dag', 'ddl'].forEach(t => {
+        document.getElementById(`tab-content-${t}`).classList.add('hidden');
+        const btn = document.getElementById(`tab-btn-${t}`);
+        btn.classList.remove('border-teal-500', 'text-teal-400');
+        btn.classList.add('border-transparent', 'text-slate-400');
+      });
+
+      document.getElementById(`tab-content-${tabId}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+      activeBtn.classList.add('border-teal-500', 'text-teal-400');
+      activeBtn.classList.remove('border-transparent', 'text-slate-400');
+
+      if (tabId === 'data') {
+        renderSelectedTable();
+      }
+    }
+
+    function renderSelectedTable() {
+      const select = document.getElementById('tableSelector');
+      const tableName = select.value;
+      const dataset = DATASETS[tableName];
+      if (!dataset) return;
+
+      const thead = document.getElementById('previewTableHead');
+      const tbody = document.getElementById('previewTableBody');
+
+      // Build Headers
+      thead.innerHTML = '<tr>' + dataset.columns.map(c => `<th scope="col" class="px-4 py-3">${c}</th>`).join('') + '</tr>';
+
+      // Build Rows
+      tbody.innerHTML = dataset.rows.map(r => {
+        const cells = dataset.columns.map(c => {
+          let val = r[c];
+          if (val === null || val === undefined) return '<span class="text-slate-600 italic">NULL</span>';
+          if (typeof val === 'object') val = JSON.stringify(val);
+          return `<span class="truncate max-w-xs inline-block">${String(val)}</span>`;
+        });
+        return `<tr class="hover:bg-slate-900/50 transition-colors">${cells.map(c => `<td class="px-4 py-2.5 whitespace-nowrap">${c}</td>`).join('')}</tr>`;
+      }).join('');
+    }
+
+    function filterTableRows() {
+      const q = document.getElementById('tableSearch').value.toLowerCase();
+      const rows = document.getElementById('previewTableBody').getElementsByTagName('tr');
+      for (let i = 0; i < rows.length; i++) {
+        const text = rows[i].textContent.toLowerCase();
+        rows[i].style.display = text.includes(q) ? '' : 'none';
+      }
+    }
+
+    // Initialize first table
+    window.addEventListener('DOMContentLoaded', () => {
+      renderSelectedTable();
+    });
+  </script>
+</body>
+</html>
