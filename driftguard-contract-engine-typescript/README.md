@@ -1,6 +1,40 @@
-# DriftGuard • Autonomous API Contract Drift Engine & JSON Schema / OpenAPI 3.1 Comparator
+# 🛡️ DriftGuard • Zero-Config API Contract Drift Engine & OpenAPI 3.1 Comparator
 
 > **Autonomous API contract drift detection, runtime schema inference, Shannon entropy route normalization, and breaking change remediation for TypeScript & Playwright.**
+
+---
+
+## 💡 What is DriftGuard in Simple Terms?
+
+Imagine you are running an e-commerce web application. One day, a backend developer makes a small change to the Order API:
+* They rename `total_amount` to `totalAmount`.
+* Or they start returning price as a string `"19.99"` instead of a number `19.99`.
+
+They forget to notify the frontend or QA team. Suddenly, the website's checkout page **crashes in production** because the frontend was expecting `total_amount` as a number, and now gets `undefined` or `NaN`.
+
+### ❌ The Problem with Existing Solutions
+Traditional tools try to solve this with **Contract Testing** (like *Pact*), but **over 85% of teams abandon it** because writing and maintaining separate mock contract test files is tedious, repetitive, and quickly drifts from reality.
+
+### ✨ How DriftGuard Solves This (Zero-Maintenance Testing)
+**DriftGuard gives you contract testing with ZERO extra tests to write.** It silently listens in the background during your existing Playwright E2E UI or API test runs:
+
+```
+[ Your Existing Playwright UI / API Tests ]
+                 │ (Normal test execution)
+                 ▼
+     [ 🛡️ DriftGuard Listener ]  <-- Silently captures real network calls
+                 │
+                 ▼
+1. Groups Dynamic URLs:   /orders/ord_12345 ➔ /orders/{id}
+2. Builds Living Spec:    Discovers what fields & types the API actually returns
+3. Compares Spec:         Live Observed Traffic vs. Production Baseline Spec
+                 │
+                 ▼
+🚨 ALERTS ON BREAKING CHANGES:
+- "CRITICAL: Backend removed required field 'total_amount'"
+- "CRITICAL: Field 'tax' changed from number to string"
+- 🤖 Gemini AI suggests the exact TypeScript code patch to fix it!
+```
 
 ---
 
