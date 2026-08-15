@@ -104,6 +104,7 @@ export interface GeneratorOptions {
   geminiApiKey?: string;
   enableAiSemantics?: boolean;
   verbose?: boolean;
+  quiet?: boolean;
   batchSize?: number;
   nullProbability?: number; // default 0.1 for nullable columns
   zipfAlpha?: number; // default 1.15

@@ -43,6 +43,7 @@ if (!program) {
     .option('-d, --dialect <dialect>', 'Target SQL dialect (postgres, mysql, sqlite)', 'postgres')
     .option('-f, --formats <formats>', 'Export formats (sql,sqlite,ndjson,csv,docker,all)', 'all')
     .option('--ai', 'Enable Gemini AI semantic vocabulary advisor', false)
+    .option('-q, --quiet', 'Suppress terminal summary output', false)
     .option('-v, --verbose', 'Enable verbose debug logging', false)
     .action(async (options: any) => {
       await runCli({
@@ -53,6 +54,7 @@ if (!program) {
         dialect: options.dialect as Dialect,
         formats: options.formats,
         ai: Boolean(options.ai),
+        quiet: Boolean(options.quiet),
         verbose: Boolean(options.verbose)
       });
     });
@@ -90,6 +92,7 @@ async function runCli(opts: {
   dialect: Dialect;
   formats: string;
   ai?: boolean;
+  quiet?: boolean;
   verbose?: boolean;
 }) {
   const schemaPath = path.resolve(process.cwd(), opts.schema);
@@ -101,7 +104,10 @@ async function runCli(opts: {
   const ddl = fs.readFileSync(schemaPath, 'utf8');
   const formatList = opts.formats.split(',').map(f => f.trim()) as ExportFormat[];
 
-  Logger.banner('CLI Execution', `Schema: ${opts.schema} | Target: ${opts.dialect}`);
+  Logger.setVerbose(Boolean(opts.verbose));
+  if (!opts.quiet) {
+    Logger.banner('CLI Execution', `Schema: ${opts.schema} | Target: ${opts.dialect}`);
+  }
 
   try {
     await SynthDB.run(ddl, {
@@ -111,7 +117,8 @@ async function runCli(opts: {
       outputDir: opts.out,
       formats: formatList,
       enableAiSemantics: opts.ai,
-      verbose: opts.verbose !== false
+      quiet: Boolean(opts.quiet),
+      verbose: Boolean(opts.verbose)
     });
   } catch (err: any) {
     Logger.error(`Generation failed: ${err.message}`);

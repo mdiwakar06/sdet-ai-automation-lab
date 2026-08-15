@@ -295,7 +295,7 @@ export class SynthDB {
     const artifacts = await engine.exportArtifacts(database);
     const summary = engine.createSummary(database, artifacts);
 
-    if (options.verbose !== false) {
+    if (!options.quiet) {
       ConsoleReporter.printSummary(summary);
     }
 

@@ -26,11 +26,28 @@ export class SqlBatchExporter {
     lines.push(this.getDisableFkHeader(dialect));
 
     // Optional DDL Schema creation
-    if (schema.rawDdl) {
+    if (schema.rawDdl && schema.dialect === dialect) {
       lines.push('\n-- -------------------------------------------------------------------');
       lines.push('-- DDL Schema Definitions');
       lines.push('-- -------------------------------------------------------------------');
       lines.push(schema.rawDdl.trim() + '\n');
+    } else {
+      lines.push('\n-- -------------------------------------------------------------------');
+      lines.push('-- DDL Schema Definitions');
+      lines.push('-- -------------------------------------------------------------------');
+      for (const table of schema.tables) {
+        const colDefs = table.columns.map(c => {
+          let typeStr = 'TEXT';
+          if (c.normalizedType === 'integer' || c.normalizedType === 'bigint' || c.normalizedType === 'smallint') typeStr = 'INTEGER';
+          if (c.normalizedType === 'float' || c.normalizedType === 'decimal') typeStr = 'REAL';
+          if (c.normalizedType === 'boolean') typeStr = 'INTEGER';
+          let def = `${this.quoteIdentifier(c.name, dialect)} ${typeStr}`;
+          if (c.isPrimaryKey && table.primaryKey.length === 1) def += ' PRIMARY KEY';
+          if (!c.isNullable) def += ' NOT NULL';
+          return `  ${def}`;
+        });
+        lines.push(`CREATE TABLE IF NOT EXISTS ${this.quoteIdentifier(table.name, dialect)} (\n${colDefs.join(',\n')}\n);\n`);
+      }
     }
 
     // Insert statements per table
