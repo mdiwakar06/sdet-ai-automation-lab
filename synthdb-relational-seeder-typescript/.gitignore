@@ -1,0 +1,11 @@
+node_modules
+dist
+output
+reports/*.html
+reports/*.json
+*.db
+*.sqlite
+*.sqlite3
+.env
+.DS_Store
+coverage
