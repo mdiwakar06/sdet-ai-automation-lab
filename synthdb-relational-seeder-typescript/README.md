@@ -224,3 +224,7 @@ npm test
 3. **UC-3: Circular Foreign Keys & Self-Referential Graph**: Validates Tarjan's SCC cycle detector, 2-Pass update planning for `departments` $\leftrightarrow$ `employees`, and self-referential hierarchy resolution.
 4. **UC-4: Composite Keys & Banking Ledger**: Validates composite primary keys `(branch_code, account_no)`, composite FKs, check constraints (`balance >= 0`, `amount > 0`), and SWIFT BIC compliance.
 5. **UC-5: Multi-Format Exporters, Docker & High-Throughput Benchmarks**: Validates SQL batch exports, NDJSON fixtures, CSV tables, Docker compose scaffolds, interactive HTML ERD dashboard generation, and >10,000 rows/sec generation throughput.
+
+---
+
+> 📖 For detailed per-assertion logs, benchmark metrics, and reproducibility tests, see the [Full Test Execution Report (TEST_RESULTS.md)](./TEST_RESULTS.md).
